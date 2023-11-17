@@ -31,7 +31,19 @@ export default function CreateGroup() {
     <div>
       <Header />
       <div className="w-full h-[100vh] flex justify-center flex-col items-center ">
-        <h1 className="text-4xl">Create Group</h1>
+        <div>
+          <svg
+            width="24"
+            height="24"
+            xmlns="http://www.w3.org/2000/svg"
+            fill-rule="evenodd"
+            clip-rule="evenodd"
+            className=""
+          >
+            <path d="M2.117 12l7.527 6.235-.644.765-9-7.521 9-7.479.645.764-7.529 6.236h21.884v1h-21.883z" />
+          </svg>
+          <h1 className="text-4xl">Create Group</h1>
+        </div>
         <div className="mx-8">
           <form className="max-w-md mx-auto mt-8" onSubmit={handleSubmit}>
             <div className="mb-4">
