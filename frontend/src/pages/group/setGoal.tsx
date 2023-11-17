@@ -9,9 +9,11 @@ interface JoinGroupProps {
   goalDescription: string;
 }
 
-const JoinGroup: React.FC<JoinGroupProps> = ({ goalName, goalDescription }) => {
-  const [buyIn] = useState("100"); // Hard-coded buy-in value
-  const [duration] = useState("30"); // Hard-coded duration value
+const JoinGroup: React.FC<JoinGroupProps> = () => {
+  const [buyIn] = useState("100");
+  const [duration] = useState("30");
+  const [goalName, setGoalName] = useState("");
+  const [goalDescription, setGoalDescription] = useState("");
 
   const isFormValid = buyIn !== "" && duration !== "";
 
@@ -24,11 +26,6 @@ const JoinGroup: React.FC<JoinGroupProps> = ({ goalName, goalDescription }) => {
         goalName,
         goalDescription,
       });
-
-      // Do any other logic you need here
-
-      // For example, you can redirect to a success page
-      // window.location.href = "/successPage";
     }
   };
 
@@ -66,7 +63,7 @@ const JoinGroup: React.FC<JoinGroupProps> = ({ goalName, goalDescription }) => {
                 id="goalName"
                 className="mt-1 p-2 "
                 value={goalName}
-                readOnly
+                onChange={(e) => setGoalName(e.target.value)} // onChange handler
               />
             </div>
             <div className="mb-4">
@@ -81,7 +78,7 @@ const JoinGroup: React.FC<JoinGroupProps> = ({ goalName, goalDescription }) => {
                 id="goalDescription"
                 className="mt-1 p-2 h-32 w-full border rounded-md"
                 value={goalDescription}
-                readOnly
+                onChange={(e) => setGoalDescription(e.target.value)} // onChange handler
               />
             </div>
             <div className="mb-4 flex">
