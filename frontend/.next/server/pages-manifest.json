@@ -2,7 +2,6 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/": "pages/index.js",
-  "/input": "pages/input.js",
-  "/profile": "pages/profile.js"
+  "/createGroup": "pages/createGroup.js",
+  "/": "pages/index.js"
 }
