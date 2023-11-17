@@ -14,7 +14,7 @@ export default function Home() {
         <div className="w-full h-[100vh] flex  flex-col items-center justify-around">
           <h1 className="mb-4 text-5xl text-center">Group Goals</h1>
           <div className="flex  flex-col items-center">
-            <Link href={"/createGroup"}>
+            <Link href={"/group/createGroup"}>
               <button
                 className="w-80 bg-ourPurple text-white rounded-md h-10 font-semibold"
                 type="button"
