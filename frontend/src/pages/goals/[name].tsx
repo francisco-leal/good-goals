@@ -2,10 +2,29 @@ import { NextSeo } from 'next-seo'
 import { useRouter } from 'next/router'
 import { useState } from 'react'
 
-import { Typography, Button, LeftArrowSVG, Tag, Avatar, CheckSVG, CrossSVG, MagnifyingGlassSVG } from '@ensdomains/thorin'
+import {
+  Typography,
+  Button,
+  LeftArrowSVG,
+  Tag,
+  Avatar,
+  CheckSVG,
+  CrossSVG,
+  MagnifyingGlassSVG
+} from '@ensdomains/thorin'
 import { ConnectButton } from '@/components/ConnectButton'
 import { Container, Layout } from '@/components/templates'
-import { NavTop, MainContent, TagRow, CreatorRow, Divider, MemberList, MemberRow, MemberDescription } from '@/components/Goal';
+import {
+  NavTop,
+  MainContent,
+  TagRow,
+  CreatorRow,
+  Divider,
+  MemberList,
+  MemberRow,
+  MemberDescription
+} from '@/components/Goal';
+import { toast } from 'react-toastify';
 
 const DEFAULT_IMAGE = "https://ipfs.io/ipfs/bafybeigauplro2r3fyn5443z55dp2ze5mc5twl5jqeiurulyrnociqynkq/male-2-8-15-10-8-2-11-9.png";
 
@@ -81,19 +100,27 @@ export default function Page() {
         return <Tag colorStyle="blueSecondary">Waiting for proof</Tag>
       case "distribute":
         return <>
-          <Button colorStyle='greyPrimary' shape="square" className='ml-auto'>
+          <Button colorStyle='transparent' shape="square" className='ml-auto'>
             <MagnifyingGlassSVG />
           </Button>
-          <Button colorStyle='greenSecondary' shape="square">
+          <Button colorStyle='greenSecondary' shape="square" onClick={() => approve()}>
             <CheckSVG />
           </Button>
-          <Button colorStyle='redSecondary' shape="square">
+          <Button colorStyle='redSecondary' shape="square" onClick={() => approve()}>
             <CrossSVG />
           </Button>
         </>
       default:
         return null;
     }
+  }
+
+  const approve = () => {
+    toast.success("Approved!");
+  }
+
+  const reject = () => {
+    toast.error("Approved!");
   }
 
   return (
