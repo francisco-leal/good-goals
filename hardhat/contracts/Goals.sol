@@ -12,6 +12,7 @@ contract Goals {
         bool isValue;
         uint256 endTime;
         uint256 totalStake;
+        uint256 baseAmount;
 
         address groupOwner;
         int96 numberMembers;
@@ -49,7 +50,7 @@ contract Goals {
         granularity = _granularity;
     }
 
-    function createGroup(string calldata _groupName, uint256 _durationDays) public {
+    function createGroup(string calldata _groupName, uint256 _durationDays, uint256 _amount) public {
         if (groups[_groupName].isValue) {
             revert('Group already exists');
         }
@@ -59,10 +60,11 @@ contract Goals {
         groups[_groupName].durationDays = _durationDays;
         groups[_groupName].isValue = true;
         groups[_groupName].groupOwner = msg.sender;
+        groups[_groupName].baseAmount = _amount;
         emit GroupCreated(_groupName);
     }
 
-    function joinGroup(string calldata _groupName, string calldata _goalTitle, string calldata _goalDescription, uint256 _amount) public {
+    function joinGroup(string calldata _groupName, string calldata _goalTitle, string calldata _goalDescription) public {
         if (!groups[_groupName].isValue) {
             revert('Group does not exist');
         }
@@ -75,20 +77,20 @@ contract Goals {
         groups[_groupName].members.push(Stake({
             goalTitle: _goalTitle,
             goalDescription: _goalDescription,
-            stake: _amount,
+            stake: groups[_groupName].baseAmount,
             source: msg.sender
         }));
 
-        if (!stakingToken.approve(msg.sender, _amount)) {
-            revert('ERC20 approval failed');
+        if ((stakingToken.allowance(msg.sender, address(this)) < groups[_groupName].baseAmount)) {
+            revert('ERC20 allowance is too small');
         }
 
-        if (!stakingToken.transferFrom(msg.sender, address(this), _amount)) {
+        if (!stakingToken.transferFrom(msg.sender, address(this), groups[_groupName].baseAmount)) {
             revert('ERC20 transfer failed');
         }
 
         groups[_groupName].numberMembers++;
-        groups[_groupName].totalStake += _amount;
+        groups[_groupName].totalStake += groups[_groupName].baseAmount;
         emit GroupJoined(_groupName, msg.sender);
     }
 
