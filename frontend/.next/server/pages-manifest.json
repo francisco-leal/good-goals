@@ -2,6 +2,6 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/": "pages/index.js",
-  "/group/createGroup": "pages/group/createGroup.js"
+  "/group/setGoal": "pages/group/setGoal.js",
+  "/": "pages/index.js"
 }

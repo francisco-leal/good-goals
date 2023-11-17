@@ -1,17 +1,24 @@
 // Header.js
-import ConnectCustom from "./CustomConnect";
+
 import { useTheme } from "next-themes";
+import { useAccount } from "wagmi";
+import CustomConnect from "@/components/CustomConnect";
 
 const Header = () => {
+  const { isConnected } = useAccount();
   const { theme, setTheme } = useTheme();
   return (
     <header className="fixed w-full top-0 border-b-2 h-16 border-slate-300">
       <div className="container h-full flex justify-between items-center">
         <div className="ml-4">
-          <h1 className="font-bold">Logo</h1>
+        {isConnected ? (
+               <CustomConnect />
+          ) : ( <h1 className="font-bold">Logo</h1>)}
+          
         </div>
 
-        <div className="mr-4">
+        <div className="mr-4 flex">
+    
           {theme === "light" ? (
             <svg
             onClick={() => setTheme("dark")}
@@ -46,6 +53,7 @@ const Header = () => {
             />
           </svg>
           )}
+        
         </div>
       </div>
     </header>
