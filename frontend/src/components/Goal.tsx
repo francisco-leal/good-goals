@@ -66,7 +66,6 @@ export const MemberList = styled.div(
     flex-direction: column;
     width: 100%;
     padding: ${theme.space['2']} 0;
-    margin-top: ${theme.space['4']};
     gap: ${theme.space['2']};
   `
 )

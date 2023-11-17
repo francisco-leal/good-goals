@@ -2,7 +2,7 @@ import { NextSeo } from 'next-seo'
 import { useRouter } from 'next/router'
 import { useState } from 'react'
 
-import { Typography, Button, LeftArrowSVG, Tag, Avatar } from '@ensdomains/thorin'
+import { Typography, Button, LeftArrowSVG, Tag, Avatar, CheckSVG, CrossSVG, MagnifyingGlassSVG } from '@ensdomains/thorin'
 import { ConnectButton } from '@/components/ConnectButton'
 import { Container, Layout } from '@/components/templates'
 import { NavTop, MainContent, TagRow, CreatorRow, Divider, MemberList, MemberRow, MemberDescription } from '@/components/Goal';
@@ -51,14 +51,14 @@ const StartStep: StepComponent = ({submitStep}) => {
 export default function Page() {
   const router = useRouter()
   const { name } = router.query
-  const [step, setStep] = useState<Step>("");
+  const [step, setStep] = useState<Step>("distribute");
 
   const title = () => {
     if( name ) return name.toString();
     else return "Goal";
   }
 
-  const renderStep = () => {
+  const renderActionButton = () => {
     switch(step) {
       case "wait":
         return <WaitStep submitStep={() => null}/>
@@ -75,13 +75,34 @@ export default function Page() {
     }
   }
 
+  const renderListActions = () => {
+    switch(step) {
+      case "submit":
+        return <Tag colorStyle="blueSecondary">Waiting for proof</Tag>
+      case "distribute":
+        return <>
+          <Button colorStyle='greyPrimary' shape="square" className='ml-auto'>
+            <MagnifyingGlassSVG />
+          </Button>
+          <Button colorStyle='greenSecondary' shape="square">
+            <CheckSVG />
+          </Button>
+          <Button colorStyle='redSecondary' shape="square">
+            <CrossSVG />
+          </Button>
+        </>
+      default:
+        return null;
+    }
+  }
+
   return (
     <>
       <NextSeo title={title()} />
       <Layout>
         <Container as="main" $variant="flexVerticalCenter">
           <NavTop>
-            <Button as='a' colorStyle='transparent' shape="square" onClick={() => router.back()}>
+            <Button colorStyle='transparent' shape="square" onClick={() => router.back()}>
               <LeftArrowSVG />
             </Button>
             <ConnectButton />
@@ -109,6 +130,7 @@ export default function Page() {
                   <Typography asProp='p' fontVariant='body'>leal.eth</Typography>
                   <Typography asProp='p' fontVariant='small'>Reach 10k followers on twitter</Typography>
                 </MemberDescription>
+                {renderListActions()}
               </MemberRow>
               <MemberRow>
                 <div style={{ minWidth: '50px' }}>
@@ -118,6 +140,7 @@ export default function Page() {
                   <Typography asProp='p' fontVariant='body'>leal.eth</Typography>
                   <Typography asProp='p' fontVariant='small'>Reach 10k followers on twitter</Typography>
                 </MemberDescription>
+                {renderListActions()}
               </MemberRow>
               <MemberRow>
                 <div style={{ minWidth: '50px' }}>
@@ -127,9 +150,10 @@ export default function Page() {
                   <Typography asProp='p' fontVariant='body'>leal.eth</Typography>
                   <Typography asProp='p' fontVariant='small'>Reach 10k followers on twitter</Typography>
                 </MemberDescription>
+                {renderListActions()}
               </MemberRow>
             </MemberList>
-            {renderStep()}
+            {renderActionButton()}
           </MainContent>
         </Container>
         <footer />
