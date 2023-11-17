@@ -25,7 +25,11 @@ import {
   MemberDescription
 } from '@/components/Goal';
 import { toast } from 'react-toastify';
+import { useAccount, useContractRead, useContractWrite } from 'wagmi'
+import GoalsABI from "@/lib/abi/Goals.json";
 
+const SMART_CONTRACT_ADDRESS = "0xfd24AEE56367A827f4f730180dd8E3060c6021dE"
+const TOKEN_ADDRESS = "0x7d91e51c8f218f7140188a155f5c75388630b6a8"
 const DEFAULT_IMAGE = "https://ipfs.io/ipfs/bafybeigauplro2r3fyn5443z55dp2ze5mc5twl5jqeiurulyrnociqynkq/male-2-8-15-10-8-2-11-9.png";
 
 type Step = "join" | "wait" | "submit" | "start" | "distribute" | "";
@@ -68,9 +72,88 @@ const StartStep: StepComponent = ({submitStep}) => {
 }
 
 export default function Page() {
+  // routing
   const router = useRouter()
   const { name } = router.query
+
+  // onchain
+  const { address } = useAccount();
+  const { data: groupExists } = useContractRead({
+    address: SMART_CONTRACT_ADDRESS,
+    abi: GoalsABI,
+    functionName: "groupExists",
+    args: [name],
+    enabled: !!name
+  });
+
+  const { data: members } = useContractRead({
+    address: SMART_CONTRACT_ADDRESS,
+    abi: GoalsABI,
+    functionName: "getMembers",
+    args: [name],
+    enabled: !!name
+  });
+
+  const {
+    data: joinTX,
+    writeAsync: joinGroup,
+    isLoading: isLoadingJoin
+  } = useContractWrite({
+    address: SMART_CONTRACT_ADDRESS,
+    abi: GoalsABI,
+    functionName: "joinGroup",
+    onSuccess: () => {
+      toast("Group joined!");
+    },
+    onError: (err: any) => {
+      if (err?.shortMessage !== "User rejected the request.") {
+        toast.error("There was an error processing your transaction.");
+      }
+    }
+  });
+
+  const {
+    data: vetoTx,
+    writeAsync: vetoProof,
+    isLoading: isLoadingVeto
+  } = useContractWrite({
+    address: SMART_CONTRACT_ADDRESS,
+    abi: GoalsABI,
+    functionName: "submitVetos",
+    onSuccess: () => {
+      toast("vetos submitted!");
+    },
+    onError: (err: any) => {
+      if (err?.shortMessage !== "User rejected the request.") {
+        toast.error("There was an error processing your transaction.");
+      }
+    }
+  });
+
+  const {
+    data: distributeTx,
+    writeAsync: distribute,
+    isLoading: isLoadingDistribute
+  } = useContractWrite({
+    address: SMART_CONTRACT_ADDRESS,
+    abi: GoalsABI,
+    functionName: "distribute",
+    onSuccess: () => {
+      toast("fund distributed!");
+    },
+    onError: (err: any) => {
+      if (err?.shortMessage !== "User rejected the request.") {
+        toast.error("There was an error processing your transaction.");
+      }
+    }
+  });
+
+  // component state
+  const [loading, setLoading] = useState<boolean>(false);
   const [step, setStep] = useState<Step>("distribute");
+
+
+  console.log("ADDRESS: ", address);
 
   const title = () => {
     if( name ) return name.toString();

@@ -40,7 +40,7 @@ contract Goals {
 
     event GroupDistributed(string groupName, address[] eligible);
 
-    mapping(string => Group) groups;
+    mapping(string => Group) public groups;
 
     IERC20 private stakingToken;
     uint256 private granularity;
@@ -48,6 +48,18 @@ contract Goals {
     constructor(IERC20 _stakingToken, uint256 _granularity) {
         stakingToken = _stakingToken;
         granularity = _granularity;
+    }
+
+    function getMembers(string calldata _groupName) public view returns (Stake[] memory) {
+        if (groups[_groupName].isValue) {
+            return groups[_groupName].members;
+        } else {
+            return new Stake[](0);
+        }
+    }
+
+    function groupExists(string calldata _groupName) public view returns (bool) {
+        return groups[_groupName].isValue;
     }
 
     function createGroup(string calldata _groupName, uint256 _durationDays, uint256 _amount) public {

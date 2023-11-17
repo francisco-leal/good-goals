@@ -10,6 +10,12 @@ import { NFTStorage, File, TokenType } from 'nft.storage';
 // @ts-ignore
 import mime from 'mime';
 
+import { toast } from 'react-toastify';
+import { useAccount, useContractWrite } from 'wagmi'
+import GoalsABI from "@/lib/abi/Goals.json";
+
+const SMART_CONTRACT_ADDRESS = "0xfd24AEE56367A827f4f730180dd8E3060c6021dE"
+
 const nftstorage = new NFTStorage({ token: process.env.NFT_STORAGE_API_KEY || "" });
 
 export const ipfsToURL = (ipfsAddress: string) => {
@@ -22,6 +28,23 @@ export const ipfsToURL = (ipfsAddress: string) => {
 export default function Page() {
   const router = useRouter()
   const [metadata, setMetadata] = useState<TokenType<{ image: File; name: string; description: string; }>>();
+  const {
+    data: submitProofTx,
+    writeAsync: submitProof,
+    isLoading: isLoadingSubmitProof
+  } = useContractWrite({
+    address: SMART_CONTRACT_ADDRESS,
+    abi: GoalsABI,
+    functionName: "submitProof",
+    onSuccess: () => {
+      toast("Proof submitted!");
+    },
+    onError: (err: any) => {
+      if (err?.shortMessage !== "User rejected the request.") {
+        toast.error("There was an error processing your transaction.");
+      }
+    },
+  });
 
   const fileToNFTStorageFormat = async (file: any) => {
     const buffer = await file.arrayBuffer();
