@@ -4,7 +4,7 @@ require("@nomicfoundation/hardhat-ethers");
 const { PRIVATE_KEY} = process.env;
 module.exports = {
   solidity: "0.8.20",
-  defaultNetwork: "celo",
+  defaultNetwork: "alfajores",
   networks: {
     gnosis: {
       url: "https://rpc.ankr.com/gnosis",
