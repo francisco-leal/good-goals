@@ -45,7 +45,7 @@ export default function CreateGroup() {
             <path d="M2.117 12l7.527 6.235-.644.765-9-7.521 9-7.479.645.764-7.529 6.236h21.884v1h-21.883z" />
           </svg>
           </Link>
-          <h1 className="text-4xl">Create Group</h1>
+          <h1 className="text-4xl font-bold">Create Group</h1>
         </div>
         <div className="mx-8">
           <form className="max-w-md mx-auto mt-8" onSubmit={handleSubmit}>

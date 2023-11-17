@@ -49,7 +49,7 @@ export default function CustomConnect() {
               return (
                 <div style={{ display: 'flex', gap: 12 }}>
                  
-                  <button onClick={openAccountModal}  className='px-1 bg-ourPurple text-white rounded-md h-10 font-semibold' type="button">
+                  <button onClick={openAccountModal}  className='px-2 bg-ourPurple text-white rounded-md h-10 font-semibold' type="button">
                     {account.displayName}
                   
                   </button>

@@ -47,7 +47,7 @@ const JoinGroup: React.FC<JoinGroupProps> = () => {
               <path d="M2.117 12l7.527 6.235-.644.765-9-7.521 9-7.479.645.764-7.529 6.236h21.884v1h-21.883z" />
             </svg>
           </Link>
-          <h1 className="text-4xl">Set Goal</h1>
+          <h1 className="text-4xl font-bold">Set Goal</h1>
         </div>
         <div className="w-full ">
           <form className="mx-8 mt-8" onSubmit={handleSubmit}>
@@ -61,7 +61,7 @@ const JoinGroup: React.FC<JoinGroupProps> = () => {
               <input
                 type="text"
                 id="goalName"
-                className="mt-1 p-2 h-32 w-full border rounded-md"
+                className="mt-1 p-2 w-full border rounded-md"
                 value={goalName}
                 onChange={(e) => setGoalName(e.target.value)} // onChange handler
               />

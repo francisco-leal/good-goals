@@ -12,7 +12,7 @@ export default function Home() {
       <Header />
       {isConnected ? (
         <div className="w-full h-[100vh] flex  flex-col items-center justify-around">
-          <h1 className="mb-4 text-5xl text-center">Group Goals</h1>
+          <h1 className="mb-4 text-5xl text-center font-bold">Group Goals</h1>
           <div className="flex  flex-col items-center">
             <Link href={"/group/createGroup"}>
               <button
@@ -32,7 +32,7 @@ export default function Home() {
         </div>
       ) : (
         <div className="w-full h-[100vh] flex  flex-col items-center justify-around">
-          <h1 className="mb-4 text-5xl text-center">Group Goals</h1>
+          <h1 className="mb-4 text-5xl text-center font-bold">Group Goals</h1>
           <div>
             <CustomConnect />
             <button

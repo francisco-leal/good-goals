@@ -22,7 +22,7 @@ export default function CreateGroup() {
               <path d="M2.117 12l7.527 6.235-.644.765-9-7.521 9-7.479.645.764-7.529 6.236h21.884v1h-21.883z" />
             </svg>
           </Link>
-          <h1 className="text-4xl text-center">Join Group</h1>
+          <h1 className="text-4xl text-center font-bold">Join Group</h1>
            <p className="pt-10 mx-10">Lorem ipsum dolor sit amet consectetur adipisicing elit. Quasi cum deleniti autem consequatur, velit, consequuntur dolor beatae quam voluptate explicabo ea. Minima facere laboriosam numquam</p>
         <div className="mt-4 ml-10">
 

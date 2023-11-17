@@ -3,5 +3,6 @@
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
   "/": "pages/index.js",
-  "/group/setGoal": "pages/group/setGoal.js"
+  "/group/setGoal": "pages/group/setGoal.js",
+  "/group/createGroup": "pages/group/createGroup.js"
 }
