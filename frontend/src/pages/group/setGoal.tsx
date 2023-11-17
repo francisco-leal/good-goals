@@ -61,7 +61,7 @@ const JoinGroup: React.FC<JoinGroupProps> = () => {
               <input
                 type="text"
                 id="goalName"
-                className="mt-1 p-2 "
+                className="mt-1 p-2 h-32 w-full border rounded-md"
                 value={goalName}
                 onChange={(e) => setGoalName(e.target.value)} // onChange handler
               />
