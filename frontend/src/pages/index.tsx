@@ -16,14 +16,14 @@ export default function Home() {
           <div className="flex  flex-col items-center">
             <Link href={"/createGroup"}>
               <button
-                className="w-80 bg-ourPurple text-white rounded-md h-10 "
+                className="w-80 bg-ourPurple text-white rounded-md h-10 font-semibold"
                 type="button"
               >
                 Create Group
               </button>
             </Link>
             <button
-              className="w-80 bg-white h-10 text-ourPurple rounded-md border-2 border-ourPurple mt-4"
+              className="w-80 bg-white h-10 text-ourPurple rounded-md border-2 border-ourPurple mt-4 font-semibold"
               type="button"
             >
               Join Group
@@ -36,7 +36,7 @@ export default function Home() {
           <div>
             <CustomConnect />
             <button
-              className="w-80 bg-white h-10 text-ourPurple rounded-md border-2 border-ourPurple mt-4"
+              className="w-80 bg-white h-10 text-ourPurple rounded-md border-2 border-ourPurple mt-4 font-semibold"
               type="button"
             >
               Create Wallet

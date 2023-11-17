@@ -34,7 +34,7 @@ export default function CustomConnect() {
             {(() => {
               if (!connected) {
                 return (
-                  <button onClick={openConnectModal} className='w-80 bg-ourPurple text-white rounded-md h-10' type="button">
+                  <button onClick={openConnectModal} className='w-80 bg-ourPurple text-white rounded-md h-10 font-semibold' type="button">
                     Connect Wallet
                   </button>
                 );

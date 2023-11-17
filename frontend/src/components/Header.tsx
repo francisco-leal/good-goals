@@ -8,7 +8,7 @@ const Header = () => {
     <header className="fixed w-full top-0 border-b-2 h-16 border-slate-300">
       <div className="container h-full flex justify-between items-center">
         <div className="ml-4">
-          <img src="/path/to/your/logo.png" alt="Logo" className="h-8" />
+          <h1 className="font-bold">Logo</h1>
         </div>
 
         <div className="mr-4">
