@@ -165,7 +165,7 @@ contract Goals {
         }
 
         // 5 members -> 3 voted yes, 2 voted no, 2*2 < 5 -> eligible
-        // 5 members -> 2 voted yes, 3 voted no, 3*2 < 5 -> not eligible
+        // 5 members -> 2 voted yes, 3 voted no, 3*2 > 5 -> not eligible
 
         uint256 totalStake;
         uint256 stakePerMember = totalStake/eligible.length;
