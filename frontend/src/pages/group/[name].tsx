@@ -34,9 +34,9 @@ const DEFAULT_IMAGE = "https://ipfs.io/ipfs/bafybeigauplro2r3fyn5443z55dp2ze5mc5
 type Step = "join" | "wait" | "submit" | "start" | "distribute" | "";
 type StepComponent = (props: { submitStep: () => void, isLoading?: boolean }) => JSX.Element;
 
-const JoinStep: StepComponent = ({submitStep, isLoading}) => {
+const JoinStep: StepComponent = ({submitStep}) => {
   return (
-    <Button className='mt-4' onClick={submitStep} loading={isLoading}>Join</Button>
+    <Button className='mt-4' onClick={submitStep}>Join</Button>
   )
 };
 
@@ -105,23 +105,6 @@ export default function Page() {
     name: ownerName,
   })
 
-  const {
-    writeAsync: joinGroupWriteTX,
-    isLoading: isLoadingJoinGroup
-  } = useContractWrite({
-    address: SMART_CONTRACT_ADDRESS,
-    abi: GoalsABI,
-    functionName: "joinGroup",
-    onSuccess: () => {
-      toast("Transaction submitted!");
-    },
-    onError: (err: any) => {
-      if (err?.shortMessage !== "User rejected the request.") {
-        toast.error("There was an error processing your transaction.");
-      }
-    },
-  });
-
   useEffect(() => {
     if(groupData.exists) {
       if (groupData.endTime == 0) {
@@ -160,7 +143,7 @@ export default function Page() {
       case "wait":
         return <WaitStep submitStep={() => null}/>
       case "join":
-        return <JoinStep submitStep={() => joinGroup()} isLoading={isLoadingJoinGroup}/>
+        return <JoinStep submitStep={() => router.push(`/group/${name}/join`)}/>
       case "submit":
         return <SubmitStep submitStep={() => setStep("distribute")}/>
       case "start":

@@ -3,7 +3,7 @@ import { getDefaultWallets } from '@rainbow-me/rainbowkit'
 import { goerli, mainnet, celoAlfajores } from 'wagmi/chains'
 import { publicProvider } from 'wagmi/providers/public'
 
-const WALLETCONNECT_ID = process.env.NEXT_PUBLIC_WALLETCONNECT_ID
+const WALLETCONNECT_ID = process.env.NEXT_PUBLIC_WALLETCONNECT_ID || ""
 
 if (!WALLETCONNECT_ID) {
   throw new Error('Missing NEXT_PUBLIC_WALLETCONNECT_ID')
