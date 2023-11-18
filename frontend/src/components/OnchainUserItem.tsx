@@ -11,29 +11,32 @@ import {
   MemberRow,
   MemberDescription
 } from '@/components/Goal';
-import { useContractRead } from 'wagmi'
+import { useContractRead, useAccount } from 'wagmi'
 import GoalsABI from "@/lib/abi/Goals.json";
 import { SMART_CONTRACT_ADDRESS } from "@/lib/constants";
 import { toast } from 'react-toastify';
+import { useMemo } from 'react';
 
 type Props = {
   name: string,
   groupExists: boolean,
   numberOfMembers: number,
   step: string,
-  index: number
+  index: number,
+  address: `0x${string}`,
 }
 
 const DEFAULT_IMAGE = "https://ipfs.io/ipfs/bafybeigauplro2r3fyn5443z55dp2ze5mc5twl5jqeiurulyrnociqynkq/male-2-8-15-10-8-2-11-9.png";
 
 type MemberInfo = {
-  goalDescription: "the very best",
-  goalTitle: "Be the best",
-  source: "0x33041027dd8F4dC82B6e825FB37ADf8f15d44053",
-  stake: 100000000000000000n
+  goalDescription: string,
+  goalTitle: string,
+  source: `0x${string}`,
+  stake: number,
 }
 
-export function OnchainUserItem({name, groupExists, numberOfMembers, step, index}: Props) {
+export function OnchainUserItem({name, groupExists, numberOfMembers, step, index, address}: Props) {
+  const { address: viwerWallet } = useAccount();
   const { data: memberInfo, isLoading: membersLoading }: {data?: MemberInfo, isLoading: boolean} = useContractRead({
     address: SMART_CONTRACT_ADDRESS,
     abi: GoalsABI,
@@ -41,6 +44,16 @@ export function OnchainUserItem({name, groupExists, numberOfMembers, step, index
     args: [name, index],
     enabled: (!!name && !!groupExists && numberOfMembers > 0)
   });
+
+  const { data: proof, isLoading: proofLoading, isError }: {data?: string, isLoading: boolean, isError: boolean} = useContractRead({
+    address: SMART_CONTRACT_ADDRESS,
+    abi: GoalsABI,
+    functionName: "getProofOfGroupByIndex",
+    args: [name, index],
+    enabled: (!!name && !!groupExists && index > 0)
+  });
+
+  console.log({proof, proofLoading, isError})
 
 
   const approve = () => {
@@ -55,12 +68,16 @@ export function OnchainUserItem({name, groupExists, numberOfMembers, step, index
 
   };
 
-  console.log({memberInfo, membersLoading});
-
   const renderListActions = () => {
     switch(step) {
       case "submit":
-        return <Tag className="ml-auto" colorStyle="blueSecondary">Waiting for proof</Tag>
+        if (true) {
+          return <Button colorStyle='transparent' shape="square" className='ml-auto'>
+          <MagnifyingGlassSVG />
+        </Button>
+        } else {
+          return <Tag className="ml-auto" colorStyle="blueSecondary">Waiting for proof</Tag>
+        }
       case "distribute":
         return <>
           <Button colorStyle='transparent' shape="square" className='ml-auto'>

@@ -1,0 +1,39 @@
+specVersion: 0.0.5
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: Goals
+    network: celo-alfajores
+    source:
+      address: "0xfa855B1018bc4F6e06C1d2149fd3821fF1d2E997"
+      abi: Goals
+      startBlock: 20985940
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - GroupCreated
+        - GroupDistributed
+        - GroupJoined
+        - GroupStarted
+        - ProofSubmitted
+        - VoteSubmitted
+      abis:
+        - name: Goals
+          file: ./abis/Goals.json
+      eventHandlers:
+        - event: GroupCreated(string)
+          handler: handleGroupCreated
+        - event: GroupDistributed(string,address[])
+          handler: handleGroupDistributed
+        - event: GroupJoined(string,address)
+          handler: handleGroupJoined
+        - event: GroupStarted(string,uint256)
+          handler: handleGroupStarted
+        - event: ProofSubmitted(string,address,string)
+          handler: handleProofSubmitted
+        - event: VoteSubmitted(string,address)
+          handler: handleVoteSubmitted
+      file: ./src/goals.ts

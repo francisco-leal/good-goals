@@ -105,9 +105,11 @@ export default function Page() {
 
   const { data: ownerName, } = useEnsName({
     address: groupData?.groupOwner,
+    enabled: !!groupData?.groupOwner && (groupData?.groupOwner != "0x0")
   })
   const { data: ownerAvatar, } = useEnsAvatar({
     name: ownerName,
+    enabled: !!ownerName
   })
 
   useEffect(() => {
@@ -214,6 +216,10 @@ export default function Page() {
     toast.error("Approved!");
   }
 
+  const memberInfoByIndex = (index: number) => {
+    return memberInfo?.[index]?.toString() || "";
+  }
+
   const groupContent = () => {
     return (
       <MainContent>
@@ -240,25 +246,28 @@ export default function Page() {
             step={step}
             groupExists={!!groupExists}
             index={0}
+            address={memberInfo?.[0] || "0x0"}
           /> :
           <Typography className="mt-2">Be the first to join the group!</Typography>}
         {groupData.numberMembers > 1 &&
           <OnchainUserItem
-            key={`${name}-${0}`}
+            key={`${name}-${1}`}
             name={name?.toString() || ""}
             numberOfMembers={groupData.numberMembers}
             step={step}
             groupExists={!!groupExists}
             index={1}
+            address={memberInfo?.[1] || "0x0"}
           />}
         {groupData.numberMembers > 2 &&
           <OnchainUserItem
-            key={`${name}-${0}`}
+            key={`${name}-${2}`}
             name={name?.toString() || ""}
             numberOfMembers={groupData.numberMembers}
             step={step}
             groupExists={!!groupExists}
             index={1}
+            address={memberInfo?.[2] || "0x0"}
           />}
         {renderActionButton()}
       </MainContent>
