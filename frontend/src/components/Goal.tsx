@@ -9,7 +9,6 @@ export const NavTop = styled.div(
     align-items: center;
     width: 100%;
     padding: ${theme.space['4']};
-    border-bottom: 1px solid ${theme.colors.grey};
   `
 )
 

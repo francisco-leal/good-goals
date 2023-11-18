@@ -55,67 +55,60 @@ export default function CreateGroup() {
       const buyInInEther = parseEther(buyIn);
       const durationInDays = parseInt(duration);
 
-      console.log({
-        groupName,
-        groupDescription,
-        durationInDays,
-        buyInInEther,
-      });
-
       const tx = await createGroup({args: [groupName, durationInDays, buyInInEther]});
       console.log(tx); 
     }
   };
 
   return (
-      <div className="w-full h-[100vh] flex justify-center flex-col items-center ">
-        <NextSeo title={"Grow or Gamble | Create Group"} />
-        <Typography asProp='h1' weight='bold' fontVariant="headingOne" className='mb-4'>Create Group</Typography>
-        <div className="mx-8">
-          <form className="max-w-md mx-auto mt-8" onSubmit={handleSubmit}>
-            <div className="mb-4">
+    <div className="w-full h-[100vh] flex justify-center flex-col items-center ">
+      <NextSeo title={"Grow or Gamble | Create Group"} />
+      <Typography asProp='h1' weight='bold' fontVariant="headingOne" className='mb-4'>Create Group</Typography>
+      <div className="mx-8">
+        <form className="max-w-md mx-auto mt-8" onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <Input
+              label="Group Name"
+              placeholder="Apes Together Strong"
+              inputMode="text"
+              value={groupName}
+              onChange={(e) => setGroupName(e.target.value)}
+            />
+          </div>
+          <div className="mb-4">
+            <Textarea
+              label="Group Description"
+              placeholder="The goal of this group is to..."
+              inputMode="text"
+              value={groupDescription}
+              onChange={(e) => setGroupDescription(e.target.value)}
+            />
+          </div>
+          <div className="flex ">
+            <div className="mr-2">
               <Input
-                label="Group Name"
-                placeholder="Apes Together Strong"
-                inputMode="text"
-                value={groupName}
-                onChange={(e) => setGroupName(e.target.value)}
+                label="Buy In"
+                placeholder="100"
+                inputMode="numeric"
+                value={buyIn}
+                onChange={(e) => setBuyIn(e.target.value)}
               />
             </div>
-            <div className="mb-4">
-              <Textarea
-                label="Group Description"
-                placeholder="The goal of this group is to..."
-                inputMode="text"
-                value={groupDescription}
-                onChange={(e) => setGroupDescription(e.target.value)}
+            <div className="ml-2">
+              <Input
+                label="Duration"
+                placeholder="days"
+                inputMode="numeric"
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
               />
             </div>
-            <div className="flex ">
-              <div className="mr-2">
-                <Input
-                  label="Buy In"
-                  placeholder="100"
-                  inputMode="numeric"
-                  value={buyIn}
-                  onChange={(e) => setBuyIn(e.target.value)}
-                />
-              </div>
-              <div className="ml-2">
-                <Input
-                  label="Duration"
-                  placeholder="days"
-                  inputMode="numeric"
-                  value={duration}
-                  onChange={(e) => setDuration(e.target.value)}
-                />
-              </div>
-            </div>
-            <Button type="submit" loading={isLoadingCreateGoal} disabled={!isFormValid || isLoadingCreateGoal} className="mt-4">
-              Create Group
-            </Button>
-          </form>
-        </div>
+          </div>
+          <Button type="submit" loading={isLoadingCreateGoal} disabled={!isFormValid || isLoadingCreateGoal} className="mt-4">
+            Create Group
+          </Button>
+        </form>
       </div>
+    </div>
   );
 }

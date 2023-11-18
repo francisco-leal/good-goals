@@ -190,14 +190,82 @@
         "internalType": "string",
         "name": "_groupName",
         "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_index",
+        "type": "uint256"
+      }
+    ],
+    "name": "getMemberOfGroupByIndex",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "source",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "goalTitle",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "goalDescription",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "stake",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct Goals.Stake",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_groupName",
+        "type": "string"
       }
     ],
     "name": "getMembers",
     "outputs": [
       {
-        "internalType": "address[]",
+        "components": [
+          {
+            "internalType": "address",
+            "name": "source",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "goalTitle",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "goalDescription",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "stake",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct Goals.Stake[]",
         "name": "",
-        "type": "address[]"
+        "type": "tuple[]"
       }
     ],
     "stateMutability": "view",
