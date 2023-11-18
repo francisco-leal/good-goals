@@ -27,7 +27,7 @@ import { shortAddress } from '@/lib/utils';
 
 const DEFAULT_IMAGE = "https://ipfs.io/ipfs/bafybeigauplro2r3fyn5443z55dp2ze5mc5twl5jqeiurulyrnociqynkq/male-2-8-15-10-8-2-11-9.png";
 
-type Step = "join" | "wait" | "submit" | "start" | "distribute" | "vote" | "";
+type Step = "join" | "wait" | "submit" | "start" | "distribute" | "vote" | "done" | "";
 type StepComponent = (props: { submitStep: () => void, isLoading?: boolean }) => JSX.Element;
 
 const JoinStep: StepComponent = ({submitStep}) => {
@@ -39,6 +39,12 @@ const JoinStep: StepComponent = ({submitStep}) => {
 const VoteStep: StepComponent = ({submitStep}) => {
   return (
     <Button className='mt-4' onClick={submitStep}>Confirm Votes</Button>
+  )
+};
+
+const DoneStep: StepComponent = ({submitStep}) => {
+  return (
+    <Button className='mt-4' onClick={submitStep}>All settled!</Button>
   )
 };
 
@@ -188,6 +194,33 @@ export default function Page() {
     }
   }, [voteStatus])
 
+  const {
+    data: distributeTx,
+    writeAsync: distributeWrite,
+  } = useContractWrite({
+    address: SMART_CONTRACT_ADDRESS,
+    abi: GoalsABI.abi,
+    functionName: "distribute",
+    onSuccess: () => {
+      toast("Transaction submitted!");
+    },
+    onError: (err: any) => {
+      if (err?.shortMessage !== "User rejected the request.") {
+        toast.error("There was an error processing your transaction.");
+      }
+    },
+  });
+
+  const {status: distributeStatus} = useWaitForTransaction({
+    hash: distributeTx?.hash
+  });
+
+  useEffect(() => {
+    if (distributeStatus == "success") {
+      setStep("done")
+    }
+  }, [distributeStatus])
+
   const { status: startStatus } = useWaitForTransaction({
     hash: startTxData?.hash,
   });
@@ -203,10 +236,15 @@ export default function Page() {
   const [approvalStates, setApprovalStates] = useState({first: true, second: true, third: true})
 
   useEffect(() => {
+    if (groupData.numberMembers == groupData.numberVotes) {
+      setStep("distribute")
+      return;
+    }
     if(allProofs && allProofs?.includes(address || "0x0")) {
       setStep("vote")
     }
-  }, [allProofs]);
+    //@ts-ignore
+  }, [allProofs, groupInformation.numberMembers, groupInformation.numberVotes]);
 
   const start = async () => {
     await startWrite({args: [name]})
@@ -218,6 +256,10 @@ export default function Page() {
     if(!approvalStates.second) addressToReject.push(memberInfo?.[1])
     if(!approvalStates.third) addressToReject.push(memberInfo?.[2])
     await voteWrite({args: [name, addressToReject]})
+  }
+
+  const distribute = async () => {
+    await distributeWrite({args: [name]})
   }
 
   const title = () => {
@@ -238,7 +280,9 @@ export default function Page() {
       case "start":
         return <StartStep submitStep={() => start()}/>
       case "distribute":
-        return <DistributeStep submitStep={() => setStep("start")}/>
+        return <DistributeStep submitStep={() => distribute()}/>
+      case "done":
+        return <DoneStep submitStep={() => null}/>
       default:
         return <LoadingStep submitStep={() => null}/>
     }
