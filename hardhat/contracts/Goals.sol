@@ -56,14 +56,6 @@ contract Goals {
         granularity = _granularity;
     }
 
-    function getMembers(string calldata _groupName) public view returns (Stake[] memory) {
-        if (groups[_groupName].isValue) {
-            return groups[_groupName].members;
-        } else {
-            return new Stake[](0);
-        }
-    }
-
     function groupExists(string calldata _groupName) public view returns (bool) {
         return groups[_groupName].isValue;
     }
