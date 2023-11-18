@@ -45,7 +45,6 @@ export default function Page() {
     },
   });
 
-  console.log({isLoadingSubmitProof})
   const { status: submitStatus } = useWaitForTransaction({
     hash: submitProofTx?.hash,
   });
@@ -62,37 +61,6 @@ export default function Page() {
     return new File([buffer], file.name, { type });
   };
 
-  const handleUpload = async (event:any) => {
-    event.preventDefault();
-    const fileInput = event.target.querySelector('input[type="file"]');
-    const file = fileInput.files[0];
-    if (!file) return;
-
-    console.log("GOT FILE")
-
-    try {
-      // Convert the file to the format expected by NFT.Storage
-      const newFile = await fileToNFTStorageFormat(file);
-
-      // Store the file and metadata
-      const uploadedImageMetadata = await nftstorage.store({
-        image: newFile,
-        name: 'Your NFT Name', // Replace with dynamic data as needed
-        description: 'Your NFT Description' // Replace with dynamic data as needed
-      });
-      console.log("FILE STORED")
-
-      setMetadata(uploadedImageMetadata);
-      console.log('NFT metadata:', uploadedImageMetadata);
-
-      const link = await linkToImage(uploadedImageMetadata)
-      await submitProof({args: [name, link]})
-
-    } catch (error) {
-      console.error('Error uploading file:', error);
-    }
-  };
-
   const linkToImage = async (uploadedImageMetadata: { url: string }) => {
     if (!uploadedImageMetadata) return;
 
@@ -106,6 +74,34 @@ export default function Page() {
       return;
     }
   }
+
+  const handleUpload = async (event:any) => {
+    event.preventDefault();
+    const fileInput = event.target.querySelector('input[type="file"]');
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    try {
+      // Convert the file to the format expected by NFT.Storage
+      const newFile = await fileToNFTStorageFormat(file);
+
+      // Store the file and metadata
+      const uploadedImageMetadata = await nftstorage.store({
+        image: newFile,
+        name: 'Your NFT Name', // Replace with dynamic data as needed
+        description: 'Your NFT Description' // Replace with dynamic data as needed
+      });
+
+      setMetadata(uploadedImageMetadata);
+      console.log('NFT metadata:', uploadedImageMetadata);
+
+      const link = await linkToImage(uploadedImageMetadata)
+      await submitProof({args: [name, link]})
+
+    } catch (error) {
+      console.error('Error uploading file:', error);
+    }
+  };
 
   return (
     <>

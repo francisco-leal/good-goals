@@ -55,8 +55,7 @@ export default function CreateGroup() {
       const buyInInEther = parseEther(buyIn);
       const durationInDays = parseInt(duration);
 
-      const tx = await createGroup({args: [groupName, durationInDays, buyInInEther]});
-      console.log(tx); 
+      await createGroup({args: [groupName, durationInDays, buyInInEther]});
     }
   };
 
