@@ -18,6 +18,7 @@ contract Goals {
         int96 numberMembers;
         int96 numberVotes;
         Stake[] members;
+        Proof[] proofs;
         mapping(address => uint256) vetos;
     }
 
@@ -26,6 +27,11 @@ contract Goals {
         string goalTitle;
         string goalDescription;
         uint256 stake;
+    }
+
+    struct Proof {
+        address source;
+        string proof;
     }
 
     event GroupCreated(string groupName);
@@ -76,7 +82,7 @@ contract Goals {
         emit GroupCreated(_groupName);
     }
 
-    function joinGroup(string calldata _groupName, string calldata _goalTitle, string calldata _goalDescription) public {
+    function joinGroup(string calldata _groupName, string calldata _goalTitle, string calldata _goalDescription) onlyValidGroup(_groupName) public {
         if (!groups[_groupName].isValue) {
             revert('Group does not exist');
         }
@@ -106,28 +112,25 @@ contract Goals {
         emit GroupJoined(_groupName, msg.sender);
     }
 
-    function start(string calldata _groupName) onlyGroupOwner(_groupName) public {
+    function start(string calldata _groupName) onlyGroupOwner(_groupName) onlyValidGroup(_groupName) public {
         // do something with stake
-        if (!groups[_groupName].isValue) {
-            revert('Group does not exist');
-        }
         uint256 endTimeCalculated = block.timestamp + groups[_groupName].durationDays * granularity;
         groups[_groupName].endTime = endTimeCalculated;
         emit GroupStarted(_groupName, endTimeCalculated);
     }
 
-    function submitProof(string calldata _groupName, string calldata _proof) public {
+    function submitProof(string calldata _groupName, string calldata _proof) onlyValidGroup(_groupName) public {
         if (block.timestamp > groups[_groupName].endTime) {
             revert('Group expired');
         }
+        groups[_groupName].proofs.push(Proof({
+            source: msg.sender,
+            proof: _proof
+        }));
         emit ProofSubmitted(_groupName, msg.sender, _proof);
     }
 
-    function submitVetos(string calldata _groupName, address[] memory _vetoAddresses) public {
-        if (!groups[_groupName].isValue) {
-            revert('Group does not exist');
-        }
-
+    function submitVetos(string calldata _groupName, address[] memory _vetoAddresses) public onlyValidGroup(_groupName) {
         if (_vetoAddresses.length > 0) {
             for (uint256 i = 0; i < _vetoAddresses.length; i++) {
                 groups[_groupName].vetos[_vetoAddresses[i]] += 1;
@@ -137,12 +140,7 @@ contract Goals {
         emit VoteSubmitted(_groupName, msg.sender);
     }
 
-    function distribute(string calldata _groupName) public {
-        //_stakeStrategy.distribute(_groupName);
-        if (!groups[_groupName].isValue) {
-            revert('Group does not exist');
-        }
-
+    function distribute(string calldata _groupName) public onlyValidGroup(_groupName)  {
         if (groups[_groupName].endTime == 0) {
             revert('Group was not started');
         }
@@ -195,6 +193,29 @@ contract Goals {
         emit GroupDistributed(_groupName, eligible);
 
         // depending on the strategy, redistribute the funds to the owners, i.e. winner
+    }
+
+    function getGroupOwner(string calldata _groupName) onlyValidGroup(_groupName) public view returns (address) {
+        return groups[_groupName].groupOwner;
+    }
+
+    function getMembers(string calldata _groupName) onlyValidGroup(_groupName) public view returns (address[] memory) {
+        address[] memory members = new address[](groups[_groupName].members.length);
+        for (uint256 i = 0; i < groups[_groupName].members.length; i++) {
+            members[i] = groups[_groupName].members[i].source;
+        }
+        return members;
+    }
+
+    function getProofs(string calldata _groupName) onlyValidGroup(_groupName) public view returns (Proof[] memory) {
+        return groups[_groupName].proofs;
+    }
+
+    modifier onlyValidGroup(string calldata _groupName) {
+        if (!groups[_groupName].isValue) {
+            revert('Group does not exist');
+        }
+        _;
     }
 
     modifier onlyGroupOwner(string calldata _group) {
