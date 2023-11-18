@@ -1,0 +1,5 @@
+.idea/**/*
+hardhat/node_modules/**/*
+hardhat/artifacts/**/*.dbg.json
+hardhat/cache/**/*
+hardhat/artifacts/build-info/*
