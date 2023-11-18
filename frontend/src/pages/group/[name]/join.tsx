@@ -1,39 +1,32 @@
 import { useRouter } from 'next/router'
 import { SMART_CONTRACT_ADDRESS, ERC20_TOKEN_ADDRESS } from "@/lib/constants";
-import { useContractWrite, erc20ABI, useWaitForTransaction } from "wagmi";
+import {useContractWrite, erc20ABI, useWaitForTransaction, useAccount} from "wagmi";
 import GoalsABI from "@/lib/abi/Goals.json";
 import { toast } from "react-toastify";
 import { useState, FormEvent, useEffect } from "react";
 import { Typography, Button, Input, Textarea } from '@ensdomains/thorin';
 import { NextSeo } from 'next-seo';
 import { parseEther } from 'viem';
+import SponsoredTransaction, {useSimpleAccount} from "@/components/SponsoredTransaction";
 
-export default function CreateGroup() {
+export default async function CreateGroup() {
   const router = useRouter()
+  const { getSenderAddress, initCode } = useSimpleAccount();
+  const [ address, setAddress ] = useState<`0x${string}`>();
+
+  const { address: owner } = useAccount();
   const { name } = router.query
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const {
-    data: joinGroupTXData,
-    writeAsync: joinGroupWriteTX,
-    isLoading: isLoadingJoinGroup
-  } = useContractWrite({
-    address: SMART_CONTRACT_ADDRESS,
-    abi: GoalsABI,
-    functionName: "joinGroup",
-    onSuccess: () => {
-      toast("Transaction submitted!");
-    },
-    onError: (err: any) => {
-      if (err?.shortMessage !== "User rejected the request.") {
-        toast.error("There was an error processing your transaction.");
-      }
-    },
-  });
+  const [isLoadingJoinGroup, setLoadingJoinGroup] = useState(false);
 
-  const { status: joinStatus } = useWaitForTransaction({
-    hash: joinGroupTXData?.hash,
-  });
+  useEffect(() => {
+    const fetchSenderAddress = async() => {
+      const address = await getSenderAddress();
+      setAddress(address);
+    }
+    fetchSenderAddress();
+  }, []);
 
   const {
     data: approveTXData,
@@ -58,14 +51,17 @@ export default function CreateGroup() {
   });
 
   useEffect(() => {
-    if (joinStatus == "success") {
-      router.replace(`/group/${name}`);
-    }
-  }, [joinStatus])
-
-  useEffect(() => {
     if (approvalStatus == "success") {
-      joinGroupWriteTX({args: [name, title, description]});
+      setLoadingJoinGroup(true);
+      new SponsoredTransaction(GoalsABI, address!!, initCode, owner!!).submit('joinGroup', name, title, description).then(() => {
+        toast("Transaction submitted!");
+        router.replace(`/group/${name}`);
+      }).catch((error) => {
+        console.log(error);
+        toast.error("There was an error processing your transaction.");
+      }).finally(() => {
+        setLoadingJoinGroup(false);
+      })
     }
   }, [approvalStatus])
 

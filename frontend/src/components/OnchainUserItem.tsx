@@ -11,12 +11,12 @@ import {
   MemberRow,
   MemberDescription
 } from '@/components/Goal';
-import { useContractRead, useAccount } from 'wagmi'
+import { useContractRead } from 'wagmi'
 import GoalsABI from "@/lib/abi/full-goals.json";
 import { SMART_CONTRACT_ADDRESS } from "@/lib/constants";
-import { toast } from 'react-toastify';
-import { useMemo, useState } from 'react';
+import {useEffect, useMemo, useState} from 'react';
 import { shortAddress } from '@/lib/utils';
+import {useSimpleAccount} from "@/components/SponsoredTransaction";
 
 type Props = {
   name: string,
@@ -39,8 +39,9 @@ type MemberInfo = {
   stake: number,
 }
 
-export function OnchainUserItem({name, groupExists, numberOfMembers, step, index, address, approvalState, setApprovalState, allProofs}: Props) {
-  const { address: viwerWallet } = useAccount();
+export async function OnchainUserItem({name, groupExists, numberOfMembers, step, index, approvalState, setApprovalState, allProofs}: Props) {
+  const { getSenderAddress } = useSimpleAccount();
+  const [ address, setAddress ] = useState<`0x${string}`>();
   const { data: memberInfo }: {data?: MemberInfo, isLoading: boolean} = useContractRead({
     address: SMART_CONTRACT_ADDRESS,
     abi: GoalsABI.abi,
@@ -68,7 +69,15 @@ export function OnchainUserItem({name, groupExists, numberOfMembers, step, index
     enabled: (!!name && !!groupExists && foundProofIndex >= 0)
   });
 
-  const isSelf = viwerWallet == memberInfo?.source;
+  useEffect(() => {
+    const fetchSenderAddress = async() => {
+      const address = await getSenderAddress();
+      setAddress(address);
+    }
+    fetchSenderAddress();
+  }, []);
+
+  const isSelf = address == memberInfo?.source;
 
   const approve = () => {
     setApprovalState(true);

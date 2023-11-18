@@ -16,7 +16,7 @@ import {
   Divider,
 } from '@/components/Goal';
 import { toast } from 'react-toastify';
-import { useAccount, useContractRead, useEnsName, useEnsAvatar, useContractWrite, useWaitForTransaction } from 'wagmi'
+import {useContractRead, useEnsName, useEnsAvatar, useAccount} from 'wagmi'
 // import GoalsABI from "@/lib/abi/Goals.json";
 import GoalsABI from "@/lib/abi/full-goals.json";
 import { SMART_CONTRACT_ADDRESS } from "@/lib/constants";
@@ -24,6 +24,7 @@ import { arrayToOnchainObject } from "@/lib/utils";
 import { formatEther } from 'viem'
 import { OnchainUserItem } from '@/components/OnchainUserItem'
 import { shortAddress } from '@/lib/utils';
+import SponsoredTransaction, {useSimpleAccount} from "@/components/SponsoredTransaction";
 
 const DEFAULT_IMAGE = "https://ipfs.io/ipfs/bafybeigauplro2r3fyn5443z55dp2ze5mc5twl5jqeiurulyrnociqynkq/male-2-8-15-10-8-2-11-9.png";
 
@@ -78,13 +79,15 @@ const StartStep: StepComponent = ({submitStep}) => {
   )
 }
 
-export default function Page() {
+export default async function Page() {
   // routing
   const router = useRouter()
   const { name } = router.query
 
   // onchain
-  const { address } = useAccount();
+  const { getSenderAddress, initCode } = useSimpleAccount();
+  const [ address, setAddress ] = useState<`0x${string}`>();
+  const { address: owner} = useAccount();
   const { data: groupExists, isLoading: groupLoading } = useContractRead({
     address: SMART_CONTRACT_ADDRESS,
     abi: GoalsABI.abi,
@@ -107,14 +110,14 @@ export default function Page() {
   }, [groupInformation])
 
   const { data: memberInfo }: {data?: `0x${string}`[], isLoading: boolean} = useContractRead({
-    address: SMART_CONTRACT_ADDRESS,
+      address: SMART_CONTRACT_ADDRESS,
     abi: GoalsABI.abi,
     functionName: "getMembers",
     args: [name],
     enabled: (!!name && !!groupExists && groupData.numberMembers > 0)
   });
 
-  const { data: allProofs }: {data?: string[], isLoading: boolean, isError: boolean} = useContractRead({
+  const { data: allProofs }: {data?: string[], isLoading: boolean, isError: boolean} =  useContractRead({
     address: SMART_CONTRACT_ADDRESS,
     abi: GoalsABI.abi,
     functionName: "getProofs",
@@ -130,6 +133,8 @@ export default function Page() {
     name: ownerName,
     enabled: !!ownerName
   })
+
+  const [isLoadingStart, setLoadingStart] = useState(false);
 
   useEffect(() => {
     if(groupData.exists) {
@@ -149,87 +154,14 @@ export default function Page() {
     }
   }, [groupData, memberInfo]);
 
-  const {
-    data: startTxData,
-    writeAsync: startWrite,
-    isLoading: isLoadingStart
-  } = useContractWrite({
-    address: SMART_CONTRACT_ADDRESS,
-    abi: GoalsABI.abi,
-    functionName: "start",
-    onSuccess: () => {
-      toast("Transaction submitted!");
-    },
-    onError: (err: any) => {
-      if (err?.shortMessage !== "User rejected the request.") {
-        toast.error("There was an error processing your transaction.");
-      }
-    },
-  });
-
-  const {
-    data: voteTX,
-    writeAsync: voteWrite,
-  } = useContractWrite({
-    address: SMART_CONTRACT_ADDRESS,
-    abi: GoalsABI.abi,
-    functionName: "submitVetos",
-    onSuccess: () => {
-      toast("Transaction submitted!");
-    },
-    onError: (err: any) => {
-      if (err?.shortMessage !== "User rejected the request.") {
-        toast.error("There was an error processing your transaction.");
-      }
-    },
-  });
-
-  const {status: voteStatus} = useWaitForTransaction({
-    hash: voteTX?.hash
-  });
-
   useEffect(() => {
-    if (voteStatus == "success") {
-      setStep("distribute")
+    const fetchSenderAddress = async() => {
+      const address = await getSenderAddress();
+      setAddress(address);
     }
-  }, [voteStatus])
+    fetchSenderAddress();
+  }, []);
 
-  const {
-    data: distributeTx,
-    writeAsync: distributeWrite,
-  } = useContractWrite({
-    address: SMART_CONTRACT_ADDRESS,
-    abi: GoalsABI.abi,
-    functionName: "distribute",
-    onSuccess: () => {
-      toast("Transaction submitted!");
-    },
-    onError: (err: any) => {
-      if (err?.shortMessage !== "User rejected the request.") {
-        toast.error("There was an error processing your transaction.");
-      }
-    },
-  });
-
-  const {status: distributeStatus} = useWaitForTransaction({
-    hash: distributeTx?.hash
-  });
-
-  useEffect(() => {
-    if (distributeStatus == "success") {
-      setStep("done")
-    }
-  }, [distributeStatus])
-
-  const { status: startStatus } = useWaitForTransaction({
-    hash: startTxData?.hash,
-  });
-
-  useEffect(() => {
-    if (startStatus == "success") {
-      setStep("submit")
-    }
-  }, [startStatus])
 
   // component state
   const [step, setStep] = useState<Step>("wait");
@@ -247,7 +179,17 @@ export default function Page() {
   }, [allProofs, groupInformation.numberMembers, groupInformation.numberVotes]);
 
   const start = async () => {
-    await startWrite({args: [name]})
+    setLoadingStart(true);
+    new SponsoredTransaction(GoalsABI, address!!, initCode, owner!!).submit('start', name).then(() => {
+      setStep("submit");
+      toast("Transaction submitted!");
+      router.push(`/group/${name}`);
+    }).catch((error) => {
+      console.log(error);
+      toast.error("There was an error processing your transaction.");
+    }).finally(() => {
+      setLoadingStart(false);
+    })
   }
 
   const vote = async () => {
@@ -255,11 +197,28 @@ export default function Page() {
     if(!approvalStates.first) addressToReject.push(memberInfo?.[0])
     if(!approvalStates.second) addressToReject.push(memberInfo?.[1])
     if(!approvalStates.third) addressToReject.push(memberInfo?.[2])
-    await voteWrite({args: [name, addressToReject]})
+    new SponsoredTransaction(GoalsABI, address!!, initCode, owner!!).submit('vote', name, addressToReject).then(() => {
+      setStep("distribute")
+      toast("Transaction submitted!");
+      router.push(`/group/${name}`);
+    }).catch((error) => {
+      console.log(error);
+      toast.error("There was an error processing your transaction.");
+    }).finally(() => {
+    })
+
   }
 
   const distribute = async () => {
-    await distributeWrite({args: [name]})
+    new SponsoredTransaction(GoalsABI, address!!, initCode, owner!!).submit('distribute', name).then(() => {
+      setStep("done");
+      toast("Transaction submitted!");
+      router.push(`/group/${name}`);
+    }).catch((error) => {
+      console.log(error);
+      toast.error("There was an error processing your transaction.");
+    }).finally(() => {
+    })
   }
 
   const title = () => {

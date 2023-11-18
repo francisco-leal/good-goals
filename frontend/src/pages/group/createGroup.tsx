@@ -1,14 +1,18 @@
-import { useState, FormEvent } from "react";
+import {useState, FormEvent, useEffect} from "react";
 import { Typography, Input, Button, Textarea } from "@ensdomains/thorin";
 import { NextSeo } from "next-seo";
 import GoalsABI from "@/lib/abi/Goals.json";
 import { toast } from "react-toastify";
 import { parseEther } from "viem";
 import { useRouter } from "next/router";
-import SponsoredTransaction from "@/components/SponsoredTransaction";
+import SponsoredTransaction, {useSimpleAccount} from "@/components/SponsoredTransaction";
+import {useAccount} from "wagmi";
 
-export default function CreateGroup() {
+export default async function () {
   const router = useRouter();
+  const { getSenderAddress, initCode } = useSimpleAccount();
+  const { address: owner } = useAccount();
+  const [ address, setAddress ] = useState<`0x${string}`>();
   const [groupName, setGroupName] = useState("");
   const [groupDescription, setGroupDescription] = useState("");
   const [buyIn, setBuyIn] = useState("");
@@ -21,6 +25,14 @@ export default function CreateGroup() {
     buyIn !== "" &&
     duration !== "";
 
+  useEffect(() => {
+    const fetchSenderAddress = async() => {
+      const address = await getSenderAddress();
+      setAddress(address);
+    }
+    fetchSenderAddress();
+  }, []);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (isFormValid) {
@@ -28,7 +40,7 @@ export default function CreateGroup() {
       const durationInDays = parseInt(duration);
 
       setLoadingCreateGoal(true);
-      new SponsoredTransaction(GoalsABI).submit('createGroup', groupName, buyInInEther, durationInDays).then(() => {
+      new SponsoredTransaction(GoalsABI, address!!, initCode, owner!!).submit('createGroup', groupName, buyInInEther, durationInDays).then(() => {
         toast("Transaction submitted!");
         router.push(`/group/${groupName}`);
       }).catch((error) => {

@@ -10,9 +10,9 @@ import { NFTStorage, File, TokenType } from 'nft.storage';
 import mime from 'mime';
 
 import { toast } from 'react-toastify';
-import { useContractWrite, useWaitForTransaction } from 'wagmi'
 import GoalsABI from "@/lib/abi/Goals.json";
-import { SMART_CONTRACT_ADDRESS } from "@/lib/constants";
+import SponsoredTransaction, {useSimpleAccount} from "@/components/SponsoredTransaction";
+import {useAccount} from "wagmi";
 
 const nftstorage = new NFTStorage({ token: process.env.NEXT_PUBLIC_NFT_STORAGE_API_KEY || "" });
 
@@ -23,37 +23,14 @@ export const ipfsToURL = (ipfsAddress: string) => {
   return "https://ipfs.io/" + ipfsAddress.replace("://", "/");
 };
 
-export default function Page() {
+export default async function Page() {
   const router = useRouter()
+  const { getSenderAddress, initCode} = useSimpleAccount();
+  const { address: owner } = useAccount();
+  const [ address, setAddress ] = useState<`0x${string}`>();
   const { name } = router.query
   const [metadata, setMetadata] = useState<TokenType<{ image: File; name: string; description: string; }>>();
-  const {
-    data: submitProofTx,
-    writeAsync: submitProof,
-    isLoading: isLoadingSubmitProof
-  } = useContractWrite({
-    address: SMART_CONTRACT_ADDRESS,
-    abi: GoalsABI,
-    functionName: "submitProof",
-    onSuccess: () => {
-      toast("Proof submitted!");
-    },
-    onError: (err: any) => {
-      if (err?.shortMessage !== "User rejected the request.") {
-        toast.error("There was an error processing your transaction.");
-      }
-    },
-  });
-
-  const { status: submitStatus } = useWaitForTransaction({
-    hash: submitProofTx?.hash,
-  });
-
-  useEffect(() => {
-    if (submitStatus === "success") {
-      router.push(`/group/${name}`);
-    }
-  }, [submitStatus])
+  const [isLoadingSubmitProof, setLoadingSubmitProof] = useState(false);
 
   const fileToNFTStorageFormat = async (file: any) => {
     const buffer = await file.arrayBuffer();
@@ -74,6 +51,14 @@ export default function Page() {
       return;
     }
   }
+
+  useEffect(() => {
+    const fetchSenderAddress = async() => {
+      const address = await getSenderAddress();
+      setAddress(address);
+    }
+    fetchSenderAddress();
+  }, []);
 
   const handleUpload = async (event:any) => {
     event.preventDefault();
@@ -96,7 +81,17 @@ export default function Page() {
       console.log('NFT metadata:', uploadedImageMetadata);
 
       const link = await linkToImage(uploadedImageMetadata)
-      await submitProof({args: [name, link]})
+
+      setLoadingSubmitProof(true);
+      new SponsoredTransaction(GoalsABI, address!!, initCode, owner!!).submit('submitProof', name, link).then(() => {
+        toast("Transaction submitted!");
+        router.push(`/group/${name}`);
+      }).catch((error) => {
+        console.log(error);
+        toast.error("There was an error processing your transaction.");
+      }).finally(() => {
+        setLoadingSubmitProof(false);
+      })
 
     } catch (error) {
       console.error('Error uploading file:', error);
