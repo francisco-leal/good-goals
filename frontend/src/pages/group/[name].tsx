@@ -7,9 +7,6 @@ import {
   Button,
   Tag,
   Avatar,
-  CheckSVG,
-  CrossSVG,
-  MagnifyingGlassSVG
 } from '@ensdomains/thorin'
 import { Container } from '@/components/templates'
 import {
@@ -20,20 +17,28 @@ import {
 } from '@/components/Goal';
 import { toast } from 'react-toastify';
 import { useAccount, useContractRead, useEnsName, useEnsAvatar, useContractWrite, useWaitForTransaction } from 'wagmi'
-import GoalsABI from "@/lib/abi/Goals.json";
+// import GoalsABI from "@/lib/abi/Goals.json";
+import GoalsABI from "@/lib/abi/full-goals.json";
 import { SMART_CONTRACT_ADDRESS } from "@/lib/constants";
 import { arrayToOnchainObject } from "@/lib/utils";
 import { formatEther } from 'viem'
 import { OnchainUserItem } from '@/components/OnchainUserItem'
+import { shortAddress } from '@/lib/utils';
 
 const DEFAULT_IMAGE = "https://ipfs.io/ipfs/bafybeigauplro2r3fyn5443z55dp2ze5mc5twl5jqeiurulyrnociqynkq/male-2-8-15-10-8-2-11-9.png";
 
-type Step = "join" | "wait" | "submit" | "start" | "distribute" | "";
+type Step = "join" | "wait" | "submit" | "start" | "distribute" | "vote" | "";
 type StepComponent = (props: { submitStep: () => void, isLoading?: boolean }) => JSX.Element;
 
 const JoinStep: StepComponent = ({submitStep}) => {
   return (
     <Button className='mt-4' onClick={submitStep}>Join</Button>
+  )
+};
+
+const VoteStep: StepComponent = ({submitStep}) => {
+  return (
+    <Button className='mt-4' onClick={submitStep}>Confirm Votes</Button>
   )
 };
 
@@ -76,15 +81,15 @@ export default function Page() {
   const { address } = useAccount();
   const { data: groupExists, isLoading: groupLoading } = useContractRead({
     address: SMART_CONTRACT_ADDRESS,
-    abi: GoalsABI,
+    abi: GoalsABI.abi,
     functionName: "groupExists",
     args: [name],
     enabled: !!name
   });
 
-  const { data: groupInformation, isLoading: groupInformationLoading } = useContractRead({
+  const { data: groupInformation } = useContractRead({
     address: SMART_CONTRACT_ADDRESS,
-    abi: GoalsABI,
+    abi: GoalsABI.abi,
     functionName: "groups",
     args: [name],
     enabled: (!!name && !!groupExists)
@@ -95,12 +100,20 @@ export default function Page() {
     return arrayToOnchainObject(groupInformation || []);
   }, [groupInformation])
 
-  const { data: memberInfo, isLoading: membersLoading }: {data?: `0x${string}`[], isLoading: boolean} = useContractRead({
+  const { data: memberInfo }: {data?: `0x${string}`[], isLoading: boolean} = useContractRead({
     address: SMART_CONTRACT_ADDRESS,
-    abi: GoalsABI,
+    abi: GoalsABI.abi,
     functionName: "getMembers",
     args: [name],
     enabled: (!!name && !!groupExists && groupData.numberMembers > 0)
+  });
+
+  const { data: allProofs }: {data?: string[], isLoading: boolean, isError: boolean} = useContractRead({
+    address: SMART_CONTRACT_ADDRESS,
+    abi: GoalsABI.abi,
+    functionName: "getProofs",
+    args: [name],
+    enabled: (!!name && !!groupExists)
   });
 
   const { data: ownerName, } = useEnsName({
@@ -136,7 +149,7 @@ export default function Page() {
     isLoading: isLoadingStart
   } = useContractWrite({
     address: SMART_CONTRACT_ADDRESS,
-    abi: GoalsABI,
+    abi: GoalsABI.abi,
     functionName: "start",
     onSuccess: () => {
       toast("Transaction submitted!");
@@ -147,6 +160,33 @@ export default function Page() {
       }
     },
   });
+
+  const {
+    data: voteTX,
+    writeAsync: voteWrite,
+  } = useContractWrite({
+    address: SMART_CONTRACT_ADDRESS,
+    abi: GoalsABI.abi,
+    functionName: "submitVetos",
+    onSuccess: () => {
+      toast("Transaction submitted!");
+    },
+    onError: (err: any) => {
+      if (err?.shortMessage !== "User rejected the request.") {
+        toast.error("There was an error processing your transaction.");
+      }
+    },
+  });
+
+  const {status: voteStatus} = useWaitForTransaction({
+    hash: voteTX?.hash
+  });
+
+  useEffect(() => {
+    if (voteStatus == "success") {
+      setStep("distribute")
+    }
+  }, [voteStatus])
 
   const { status: startStatus } = useWaitForTransaction({
     hash: startTxData?.hash,
@@ -160,9 +200,24 @@ export default function Page() {
 
   // component state
   const [step, setStep] = useState<Step>("wait");
+  const [approvalStates, setApprovalStates] = useState({first: true, second: true, third: true})
+
+  useEffect(() => {
+    if(allProofs && allProofs?.includes(address || "0x0")) {
+      setStep("vote")
+    }
+  }, [allProofs]);
 
   const start = async () => {
     await startWrite({args: [name]})
+  }
+
+  const vote = async () => {
+    const addressToReject = []
+    if(!approvalStates.first) addressToReject.push(memberInfo?.[0])
+    if(!approvalStates.second) addressToReject.push(memberInfo?.[1])
+    if(!approvalStates.third) addressToReject.push(memberInfo?.[2])
+    await voteWrite({args: [name, addressToReject]})
   }
 
   const title = () => {
@@ -178,6 +233,8 @@ export default function Page() {
         return <JoinStep submitStep={() => router.push(`/group/${name}/join`)}/>
       case "submit":
         return <SubmitStep submitStep={() => router.push(`/group/${name}/submit`)}/>
+      case "vote":
+        return <VoteStep submitStep={() => vote()}/>
       case "start":
         return <StartStep submitStep={() => start()}/>
       case "distribute":
@@ -185,39 +242,6 @@ export default function Page() {
       default:
         return <LoadingStep submitStep={() => null}/>
     }
-  }
-
-  const renderListActions = () => {
-    switch(step) {
-      case "submit":
-        return <Tag colorStyle="blueSecondary">Waiting for proof</Tag>
-      case "distribute":
-        return <>
-          <Button colorStyle='transparent' shape="square" className='ml-auto'>
-            <MagnifyingGlassSVG />
-          </Button>
-          <Button colorStyle='greenSecondary' shape="square" onClick={() => approve()}>
-            <CheckSVG />
-          </Button>
-          <Button colorStyle='redSecondary' shape="square" onClick={() => approve()}>
-            <CrossSVG />
-          </Button>
-        </>
-      default:
-        return null;
-    }
-  }
-
-  const approve = () => {
-    toast.success("Approved!");
-  }
-
-  const reject = () => {
-    toast.error("Approved!");
-  }
-
-  const memberInfoByIndex = (index: number) => {
-    return memberInfo?.[index]?.toString() || "";
   }
 
   const groupContent = () => {
@@ -235,7 +259,7 @@ export default function Page() {
           <div style={{ minWidth: '50px' }}>
             <Avatar label='profile_picture' src={ownerAvatar || DEFAULT_IMAGE}/>
           </div>
-          <Typography asProp='p' fontVariant='body'>Created by {ownerName || groupData.groupOwner}</Typography>
+          <Typography asProp='p' fontVariant='body'>Created by {ownerName || shortAddress(groupData.groupOwner)}</Typography>
         </CreatorRow>
         <Divider/>
         {groupData.numberMembers > 0 ?
@@ -247,6 +271,9 @@ export default function Page() {
             groupExists={!!groupExists}
             index={0}
             address={memberInfo?.[0] || "0x0"}
+            approvalState={approvalStates.first}
+            setApprovalState={(state) => setApprovalStates({...approvalStates, first: state})}
+            allProofs={allProofs}
           /> :
           <Typography className="mt-2">Be the first to join the group!</Typography>}
         {groupData.numberMembers > 1 &&
@@ -258,6 +285,9 @@ export default function Page() {
             groupExists={!!groupExists}
             index={1}
             address={memberInfo?.[1] || "0x0"}
+            approvalState={approvalStates.second}
+            setApprovalState={(state) => setApprovalStates({...approvalStates, second: state})}
+            allProofs={allProofs}
           />}
         {groupData.numberMembers > 2 &&
           <OnchainUserItem
@@ -268,6 +298,8 @@ export default function Page() {
             groupExists={!!groupExists}
             index={1}
             address={memberInfo?.[2] || "0x0"}
+            approvalState={approvalStates.third}
+            setApprovalState={(state) => setApprovalStates({...approvalStates, third: state})}
           />}
         {renderActionButton()}
       </MainContent>

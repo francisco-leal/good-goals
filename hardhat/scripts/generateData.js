@@ -4,24 +4,12 @@ const { exit } = process;
 async function main() {
   const [creator] = await ethers.getSigners();
   console.log(creator.address);
-  const contract = await ethers.getContractAt("Goals", "0xfd24AEE56367A827f4f730180dd8E3060c6021dE");
+  const contract = await ethers.getContractAt("Goals", "0xfa855B1018bc4F6e06C1d2149fd3821fF1d2E997");
 
-  let tx;
-  console.log("contract loaded");
-  tx = await contract.createGroup("ape", 3);
-  console.log("group created: ", tx);
+  const result1 = await contract.getProofs("ApesTogetherStrong");
+  const result2 = await contract.getProofOfGroupByIndex("ApesTogetherStrong", 0)
 
-  const stakingTokenContract = await ethers.getContractAt("IERC20", "0x7d91e51c8f218f7140188a155f5c75388630b6a8");
-
-  console.log("trying to approve: ", contract.address);
-
-  await stakingTokenContract.connect(creator).approve(contract.address, 100000000000000000n);
-
-  console.log("approved");
-
-  tx = await contract.joinGroup("ape", "jump a lot", "I really want to jump a lot and often", 100000000000000000n)
-
-  console.log("joined group: ", tx);
+  console.log({result1, result2});
 }
 
 main()

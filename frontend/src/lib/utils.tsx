@@ -38,3 +38,7 @@ export const arrayToOnchainObject = (onchainObject: OnChainGroupObject): MappedG
     numberVotes: onchainObject[8],
   }
 };
+
+export const shortAddress = (address: string) => {
+  return `${address.toLowerCase().slice(0, 6)}...${address.toLowerCase().slice(-4)}`;
+};
