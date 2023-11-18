@@ -58,7 +58,6 @@ export default function CreateGroup() {
   };
 
   return (
-    <div>
       <div className="w-full h-[100vh] flex justify-center flex-col items-center ">
         <NextSeo title={"Grow or Gamble | Create Group"} />
         <Typography asProp='h1' weight='bold' fontVariant="headingOne" className='mb-4'>Create Group</Typography>
@@ -108,6 +107,5 @@ export default function CreateGroup() {
           </form>
         </div>
       </div>
-    </div>
   );
 }
