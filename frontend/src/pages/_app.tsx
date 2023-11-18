@@ -14,6 +14,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useState } from 'react'
 import {Header} from '@/components/Header'
+import   Web3Modal  from "../components/context/Web3Modal"; 
 
 export default function App({ Component, pageProps }: AppProps) {
   const isMounted = useIsMounted()
@@ -30,6 +31,7 @@ export default function App({ Component, pageProps }: AppProps) {
   return (
     <WagmiConfig config={wagmiConfig}>
       <RainbowKitProvider chains={chains}>
+          <Web3Modal>
         <ThemeProvider theme={theme === "light" ? lightTheme : darkTheme}>
           <ThorinGlobalStyles />
           <ToastContainer />
@@ -37,6 +39,7 @@ export default function App({ Component, pageProps }: AppProps) {
           <DefaultSeo {...SEO} />
           {isMounted && <Component {...pageProps} />}
         </ThemeProvider>
+        </Web3Modal>
       </RainbowKitProvider>
     </WagmiConfig>
   )

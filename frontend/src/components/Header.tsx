@@ -1,12 +1,14 @@
 // Header.js
-import { ConnectButton } from "./ConnectButton";
+import { Button } from '@ensdomains/thorin'
+import { useWeb3Modal } from '@web3modal/wagmi/react'
 
 export const Header = ({ theme, setTheme }: { theme: string, setTheme: (newTheme: string) => void}) => {
+  const { open } = useWeb3Modal()
   return (
     <header className="fixed w-full top-0 border-b-2 h-16 border-slate-300">
       <div className="container h-full flex justify-between items-center">
         <div className="ml-4">
-          <ConnectButton />    
+        <Button onClick={() => open()}>Connect Wallet</Button>  
         </div>
 
         <div className="mr-4 flex">
