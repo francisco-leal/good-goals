@@ -199,6 +199,10 @@ contract Goals {
         return members;
     }
 
+    function getMemberOfGroupByIndex(string calldata _groupName, uint256 _index) onlyValidGroup(_groupName) public view returns (Stake memory) {
+        return groups[_groupName].members[_index];
+    }
+
     function getProofs(string calldata _groupName) onlyValidGroup(_groupName) public view returns (Proof[] memory) {
         return groups[_groupName].proofs;
     }

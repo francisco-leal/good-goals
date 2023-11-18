@@ -17,18 +17,15 @@ import {
   TagRow,
   CreatorRow,
   Divider,
-  MemberList,
-  MemberRow,
-  MemberDescription
 } from '@/components/Goal';
 import { toast } from 'react-toastify';
-import { useAccount, useContractRead, useContractWrite, useEnsName, useEnsAvatar } from 'wagmi'
+import { useAccount, useContractRead, useEnsName, useEnsAvatar, useContractWrite, useWaitForTransaction } from 'wagmi'
 import GoalsABI from "@/lib/abi/Goals.json";
 import { SMART_CONTRACT_ADDRESS } from "@/lib/constants";
 import { arrayToOnchainObject } from "@/lib/utils";
 import { formatEther } from 'viem'
+import { OnchainUserItem } from '@/components/OnchainUserItem'
 
-const TOKEN_ADDRESS = "0x7d91e51c8f218f7140188a155f5c75388630b6a8"
 const DEFAULT_IMAGE = "https://ipfs.io/ipfs/bafybeigauplro2r3fyn5443z55dp2ze5mc5twl5jqeiurulyrnociqynkq/male-2-8-15-10-8-2-11-9.png";
 
 type Step = "join" | "wait" | "submit" | "start" | "distribute" | "";
@@ -42,13 +39,13 @@ const JoinStep: StepComponent = ({submitStep}) => {
 
 const WaitStep: StepComponent = ({submitStep}) => {
   return (
-    <Button className='mt-4' onClick={submitStep}>Waiting to start...</Button>
+    <Button className='mt-4' onClick={submitStep} disabled>Waiting to start...</Button>
   )
 };
 
 const SubmitStep: StepComponent = ({submitStep}) => {
   return (
-    <Button className='mt-4' onClick={submitStep}>Submit</Button>
+    <Button className='mt-4' onClick={submitStep}>Submit proof</Button>
   )
 };
 
@@ -98,6 +95,14 @@ export default function Page() {
     return arrayToOnchainObject(groupInformation || []);
   }, [groupInformation])
 
+  const { data: memberInfo, isLoading: membersLoading }: {data?: `0x${string}`[], isLoading: boolean} = useContractRead({
+    address: SMART_CONTRACT_ADDRESS,
+    abi: GoalsABI,
+    functionName: "getMembers",
+    args: [name],
+    enabled: (!!name && !!groupExists && groupData.numberMembers > 0)
+  });
+
   const { data: ownerName, } = useEnsName({
     address: groupData?.groupOwner,
   })
@@ -109,34 +114,59 @@ export default function Page() {
     if(groupData.exists) {
       if (groupData.endTime == 0) {
         if (groupData.groupOwner === address && groupData.numberMembers > 0) {
-          setStep("wait")
+          setStep("start")
         } else {
-          setStep("join")
+          if (memberInfo && address && memberInfo.includes(address)) {
+            setStep("wait")
+          } else {
+            setStep("join")
+          }
         }
       } else {
         setStep("submit")
       }
     }
-  }, [groupData]);
+  }, [groupData, memberInfo]);
+
+  const {
+    data: startTxData,
+    writeAsync: startWrite,
+    isLoading: isLoadingStart
+  } = useContractWrite({
+    address: SMART_CONTRACT_ADDRESS,
+    abi: GoalsABI,
+    functionName: "start",
+    onSuccess: () => {
+      toast("Transaction submitted!");
+    },
+    onError: (err: any) => {
+      if (err?.shortMessage !== "User rejected the request.") {
+        toast.error("There was an error processing your transaction.");
+      }
+    },
+  });
+
+  const { status: startStatus } = useWaitForTransaction({
+    hash: startTxData?.hash,
+  });
+
+  useEffect(() => {
+    if (startStatus == "success") {
+      setStep("submit")
+    }
+  }, [startStatus])
 
   // component state
   const [step, setStep] = useState<Step>("wait");
 
-  console.log({
-    step,
-    groupData,
-    ownerName,
-    ownerAvatar
-  })
+  const start = async () => {
+    await startWrite({args: [name]})
+  }
 
   const title = () => {
     if( name ) return name.toString();
     else return "Group";
   }
-
-  const joinGroup = async () => {
-    // joinGroupWriteTX({args: [name]})
-  };
 
   const renderActionButton = () => {
     switch(step) {
@@ -145,9 +175,9 @@ export default function Page() {
       case "join":
         return <JoinStep submitStep={() => router.push(`/group/${name}/join`)}/>
       case "submit":
-        return <SubmitStep submitStep={() => setStep("distribute")}/>
+        return <SubmitStep submitStep={() => router.push(`/group/${name}/submit`)}/>
       case "start":
-        return <StartStep submitStep={() => setStep("submit")}/>
+        return <StartStep submitStep={() => start()}/>
       case "distribute":
         return <DistributeStep submitStep={() => setStep("start")}/>
       default:
@@ -203,39 +233,33 @@ export default function Page() {
         </CreatorRow>
         <Divider/>
         {groupData.numberMembers > 0 ?
-          <MemberList>
-            <MemberRow>
-              <div style={{ minWidth: '50px' }}>
-                <Avatar label='profile_picture' src={DEFAULT_IMAGE}/>
-              </div>
-              <MemberDescription>
-                <Typography asProp='p' fontVariant='body'>leal.eth</Typography>
-                <Typography asProp='p' fontVariant='small'>Reach 10k followers on twitter</Typography>
-              </MemberDescription>
-              {renderListActions()}
-            </MemberRow>
-            <MemberRow>
-              <div style={{ minWidth: '50px' }}>
-                <Avatar label='profile_picture' src={DEFAULT_IMAGE}/>
-              </div>
-              <MemberDescription>
-                <Typography asProp='p' fontVariant='body'>leal.eth</Typography>
-                <Typography asProp='p' fontVariant='small'>Reach 10k followers on twitter</Typography>
-              </MemberDescription>
-              {renderListActions()}
-            </MemberRow>
-            <MemberRow>
-              <div style={{ minWidth: '50px' }}>
-                <Avatar label='profile_picture' src={DEFAULT_IMAGE}/>
-              </div>
-              <MemberDescription>
-                <Typography asProp='p' fontVariant='body'>leal.eth</Typography>
-                <Typography asProp='p' fontVariant='small'>Reach 10k followers on twitter</Typography>
-              </MemberDescription>
-              {renderListActions()}
-            </MemberRow>
-          </MemberList> : <Typography className="mt-2">Be the first to join the group!</Typography>
-        }
+          <OnchainUserItem
+            key={`${name}-${0}`}
+            name={name?.toString() || ""}
+            numberOfMembers={groupData.numberMembers}
+            step={step}
+            groupExists={!!groupExists}
+            index={0}
+          /> :
+          <Typography className="mt-2">Be the first to join the group!</Typography>}
+        {groupData.numberMembers > 1 &&
+          <OnchainUserItem
+            key={`${name}-${0}`}
+            name={name?.toString() || ""}
+            numberOfMembers={groupData.numberMembers}
+            step={step}
+            groupExists={!!groupExists}
+            index={1}
+          />}
+        {groupData.numberMembers > 2 &&
+          <OnchainUserItem
+            key={`${name}-${0}`}
+            name={name?.toString() || ""}
+            numberOfMembers={groupData.numberMembers}
+            step={step}
+            groupExists={!!groupExists}
+            index={1}
+          />}
         {renderActionButton()}
       </MainContent>
     )
