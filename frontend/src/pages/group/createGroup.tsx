@@ -1,7 +1,7 @@
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useEffect } from "react";
 import { Typography, Input, Button, Textarea } from "@ensdomains/thorin";
 import { NextSeo } from "next-seo";
-import { useContractWrite } from "wagmi";
+import { useContractWrite, useWaitForTransaction } from "wagmi";
 import { SMART_CONTRACT_ADDRESS } from "@/lib/constants";
 import GoalsABI from "@/lib/abi/Goals.json";
 import { toast } from "react-toastify";
@@ -16,6 +16,7 @@ export default function CreateGroup() {
   const [duration, setDuration] = useState("");
 
   const {
+    data: txData,
     writeAsync: createGroup,
     isLoading: isLoadingCreateGoal
   } = useContractWrite({
@@ -31,6 +32,16 @@ export default function CreateGroup() {
       }
     },
   });
+
+  const { status } = useWaitForTransaction({
+    hash: txData?.hash,
+  });
+
+  useEffect(() => {
+    if (status == "success") {
+      router.push(`/group/${groupName}`);
+    }
+  }, [status])
 
   const isFormValid =
     groupName !== "" &&
@@ -52,8 +63,7 @@ export default function CreateGroup() {
       });
 
       const tx = await createGroup({args: [groupName, durationInDays, buyInInEther]});
-      console.log(tx);
-      router.push(`/group/${groupName}`);
+      console.log(tx); 
     }
   };
 
