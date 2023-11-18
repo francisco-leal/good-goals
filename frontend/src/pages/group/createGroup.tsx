@@ -7,6 +7,7 @@ import GoalsABI from "@/lib/abi/Goals.json";
 import { toast } from "react-toastify";
 import { parseEther } from "viem";
 import { useRouter } from "next/router";
+import SponsoredTransaction from "@/components/SponsoredTransaction";
 
 export default function CreateGroup() {
   const router = useRouter();
@@ -55,7 +56,7 @@ export default function CreateGroup() {
       const buyInInEther = parseEther(buyIn);
       const durationInDays = parseInt(duration);
 
-      await createGroup({args: [groupName, durationInDays, buyInInEther]});
+      await new SponsoredTransaction(GoalsABI).submit(groupName, buyInInEther, durationInDays);
     }
   };
 

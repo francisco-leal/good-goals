@@ -1,18 +1,20 @@
 import { getAccountNonce } from "permissionless"
 import { UserOperation, bundlerActions, getSenderAddress, getUserOperationHash, waitForUserOperationReceipt, GetUserOperationReceiptReturnType, signUserOperationHashWithECDSA } from "permissionless"
 import { pimlicoBundlerActions, pimlicoPaymasterActions } from "permissionless/actions/pimlico"
-import { Address, Hash, concat, createClient, createPublicClient, encodeFunctionData, http, Hex } from "viem"
+import {Address, Hash, concat, createClient, createPublicClient, encodeFunctionData, http, Hex, Abi} from "viem"
 import { generatePrivateKey, privateKeyToAccount, signMessage } from "viem/accounts"
 import { celoAlfajores } from "viem/chains"
 
 
 class SponsoredTransaction {
 
-    constructor() {
+    private readonly abi: Abi;
 
+    constructor(abi: Abi) {
+        this.abi = abi;
     }
 
-    async submit(groupName: string) {
+    async submit(...args) {
         console.log('Trying to create sponsored tx');
 
         // CREATE THE CLIENTS
@@ -74,18 +76,8 @@ class SponsoredTransaction {
         const value = BigInt(0)
 
         const createGroupData = encodeFunctionData({
-            abi: [{
-                inputs: [
-                    { name: "_groupName", type: "string" },
-                    { name: "_durationDays", type: "uint256" },
-                    { name: "_amount", type: "uint256" },
-                ],
-                name: "createGroup",
-                outputs: [],
-                stateMutability: "nonpayable",
-                type: "function",
-            }],
-            args: ['abc', BigInt(1), BigInt(1)]
+            abi: this.abi,
+            args: args
         })
 
         const callData = encodeFunctionData({
@@ -110,7 +102,7 @@ class SponsoredTransaction {
         // FILL OUT REMAINING USER OPERATION VALUES
         const gasPricePublic = await publicClient.getGasPrice();
         console.log("Gas Price 2: " + gasPricePublic);
-        // const gasPrice = await bundlerClient.getUserOperationGasPrice()
+        const gasPrice = await bundlerClient.getUserOperationGasPrice()
 
         // console.log("Gas Price:", gasPrice)
         const userOperation = {
@@ -149,20 +141,20 @@ class SponsoredTransaction {
 
         console.log("Generated signature:", signature)
 
-        // // SUBMIT THE USER OPERATION TO BE BUNDLED
-        // const userOperationHash = await bundlerClient.sendUserOperation({
-        //     userOperation: sponsoredUserOperation,
-        //     entryPoint: ENTRY_POINT_ADDRESS
-        // })
-        //
-        // console.log("Received User Operation hash:", userOperationHash)
-        //
-        // // let's also wait for the userOperation to be included, by continually querying for the receipts
-        // console.log("Querying for receipts...")
-        // const receipt = await bundlerClient.waitForUserOperationReceipt({ hash: userOperationHash })
-        // const txHash = receipt.receipt.transactionHash
-        //
-        // console.log(`UserOperation included: https://goerli.lineascan.build/tx/${txHash}`)
+        // SUBMIT THE USER OPERATION TO BE BUNDLED
+        const userOperationHash = await bundlerClient.sendUserOperation({
+            userOperation: sponsoredUserOperation,
+            entryPoint: ENTRY_POINT_ADDRESS
+        })
+
+        console.log("Received User Operation hash:", userOperationHash)
+
+        // let's also wait for the userOperation to be included, by continually querying for the receipts
+        console.log("Querying for receipts...")
+        const receipt = await bundlerClient.waitForUserOperationReceipt({ hash: userOperationHash })
+        const txHash = receipt.receipt.transactionHash
+
+        console.log(`UserOperation included: https://goerli.lineascan.build/tx/${txHash}`)
     }
 
 }
