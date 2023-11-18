@@ -37,7 +37,7 @@ module.exports = {
       alfajores: "9FYBMCJ8MJEF9Z6Y64MY9CBNF95KRE3VMJ",
       celo: "9FYBMCJ8MJEF9Z6Y64MY9CBNF95KRE3VMJ",
       baseGoerli: "29KPV447K5EVY6QTVKF4XXR87IUHSWX6DN",
-      arbitrumGoerli: "12"
+      arbitrumGoerli: "YZZC6JQ8Q7GMMCS7417X9DT9JEIPX5IZBS"
     },
     customChains: [
       {
