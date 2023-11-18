@@ -12,10 +12,11 @@ import {
   MemberDescription
 } from '@/components/Goal';
 import { useContractRead, useAccount } from 'wagmi'
-import GoalsABI from "@/lib/abi/Goals.json";
+import GoalsABI from "@/lib/abi/full-goals.json";
 import { SMART_CONTRACT_ADDRESS } from "@/lib/constants";
 import { toast } from 'react-toastify';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { shortAddress } from '@/lib/utils';
 
 type Props = {
   name: string,
@@ -24,6 +25,9 @@ type Props = {
   step: string,
   index: number,
   address: `0x${string}`,
+  approvalState: boolean,
+  setApprovalState: (state: boolean) => void,
+  allProofs?: string[],
 }
 
 const DEFAULT_IMAGE = "https://ipfs.io/ipfs/bafybeigauplro2r3fyn5443z55dp2ze5mc5twl5jqeiurulyrnociqynkq/male-2-8-15-10-8-2-11-9.png";
@@ -35,46 +39,72 @@ type MemberInfo = {
   stake: number,
 }
 
-export function OnchainUserItem({name, groupExists, numberOfMembers, step, index, address}: Props) {
+export function OnchainUserItem({name, groupExists, numberOfMembers, step, index, address, approvalState, setApprovalState, allProofs}: Props) {
   const { address: viwerWallet } = useAccount();
-  const { data: memberInfo, isLoading: membersLoading }: {data?: MemberInfo, isLoading: boolean} = useContractRead({
+  const { data: memberInfo }: {data?: MemberInfo, isLoading: boolean} = useContractRead({
     address: SMART_CONTRACT_ADDRESS,
-    abi: GoalsABI,
+    abi: GoalsABI.abi,
     functionName: "getMemberOfGroupByIndex",
     args: [name, index],
     enabled: (!!name && !!groupExists && numberOfMembers > 0)
   });
 
-  const { data: proof, isLoading: proofLoading, isError }: {data?: string, isLoading: boolean, isError: boolean} = useContractRead({
+  const foundProofIndex = useMemo(() => {
+    if (!memberInfo?.source) return -1;
+    if (allProofs && allProofs?.length > 0) {
+      return allProofs.findIndex((p) => {
+        return p == memberInfo?.source
+      })
+    } else {
+      return -1
+    }
+  }, [allProofs, memberInfo, memberInfo?.source]);
+
+  const { data: proof }: {data?: {proof: string, source: string }, isLoading: boolean, isError: boolean} = useContractRead({
     address: SMART_CONTRACT_ADDRESS,
-    abi: GoalsABI,
+    abi: GoalsABI.abi,
     functionName: "getProofOfGroupByIndex",
-    args: [name, index],
-    enabled: (!!name && !!groupExists && index > 0)
+    args: [name, foundProofIndex],
+    enabled: (!!name && !!groupExists && foundProofIndex >= 0)
   });
 
-  console.log({proof, proofLoading, isError})
-
+  const isSelf = viwerWallet == memberInfo?.source;
 
   const approve = () => {
-    toast.success("Approved!");
+    setApprovalState(true);
   }
 
   const reject = () => {
-    toast.error("Approved!");
+    setApprovalState(false);
   }
 
   const viewProof = () => {
-
+    if (proof && proof.proof) {
+      window.open(proof.proof, '_blank');
+    }
   };
 
   const renderListActions = () => {
     switch(step) {
-      case "submit":
-        if (true) {
-          return <Button colorStyle='transparent' shape="square" className='ml-auto'>
-          <MagnifyingGlassSVG />
-        </Button>
+      case "vote":
+        if (proof) {
+          return isSelf ? (
+            <Button colorStyle='transparent' shape="square" className='ml-auto'>
+              <MagnifyingGlassSVG />
+            </Button>
+          ) : (
+            <>
+              <Button colorStyle='transparent' shape="square" className='ml-auto' onClick={() => viewProof()}>
+                <MagnifyingGlassSVG />
+              </Button>
+              <Button colorStyle={approvalState ? 'greenPrimary' : 'greenSecondary'} shape="square" onClick={() => approve()}>
+                <CheckSVG />
+              </Button>
+              <Button colorStyle={approvalState ? 'redSecondary' : 'redPrimary'} shape="square" onClick={() => reject()}>
+                <CrossSVG />
+              </Button>
+            </>
+          )
         } else {
           return <Tag className="ml-auto" colorStyle="blueSecondary">Waiting for proof</Tag>
         }
@@ -82,12 +112,6 @@ export function OnchainUserItem({name, groupExists, numberOfMembers, step, index
         return <>
           <Button colorStyle='transparent' shape="square" className='ml-auto'>
             <MagnifyingGlassSVG />
-          </Button>
-          <Button colorStyle='greenSecondary' shape="square" onClick={() => approve()}>
-            <CheckSVG />
-          </Button>
-          <Button colorStyle='redSecondary' shape="square" onClick={() => approve()}>
-            <CrossSVG />
           </Button>
         </>
       default:
@@ -101,7 +125,7 @@ export function OnchainUserItem({name, groupExists, numberOfMembers, step, index
         <Avatar label='profile_picture' src={DEFAULT_IMAGE}/>
       </div>
       <MemberDescription>
-        <Typography asProp='p' fontVariant='body'>leal.eth</Typography>
+        <Typography asProp='p' fontVariant='body'>{shortAddress(memberInfo?.source || "")}</Typography>
         <Typography asProp='p' fontVariant='small'>{memberInfo?.goalTitle}</Typography>
       </MemberDescription>
       {renderListActions()}
