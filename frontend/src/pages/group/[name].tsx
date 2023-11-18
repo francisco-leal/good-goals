@@ -105,9 +105,11 @@ export default function Page() {
 
   const { data: ownerName, } = useEnsName({
     address: groupData?.groupOwner,
+    enabled: !!groupData?.groupOwner && (groupData?.groupOwner != "0x0")
   })
   const { data: ownerAvatar, } = useEnsAvatar({
     name: ownerName,
+    enabled: !!ownerName
   })
 
   useEffect(() => {

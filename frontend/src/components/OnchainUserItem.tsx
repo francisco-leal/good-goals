@@ -45,34 +45,15 @@ export function OnchainUserItem({name, groupExists, numberOfMembers, step, index
     enabled: (!!name && !!groupExists && numberOfMembers > 0)
   });
 
-  const { data: proofInfo, isLoading: proofsLoading }: {data?: `0x${string}`[], isLoading: boolean} = useContractRead({
+  const { data: proof, isLoading: proofLoading, isError }: {data?: string, isLoading: boolean, isError: boolean} = useContractRead({
     address: SMART_CONTRACT_ADDRESS,
     abi: GoalsABI,
-    functionName: "getProofs",
-    args: [name],
-    enabled: (!!name)
+    functionName: "getProofOfGroupByIndex",
+    args: [name, index],
+    enabled: (!!name && !!groupExists && index > 0)
   });
 
-  console.log({proofInfo, proofsLoading})
-
-  //  const {hasProof, indexOfProof} = useMemo(() => {
-  //   for (let i = 0; i < proofInfo.length; i++) {
-  //     if (proofInfo[i] === address) {
-  //       return {hasProof: true, indexOfProof: i};
-  //     }
-  //   }
-  //   return {hasProof: false, indexOfProof: -1};
-  // }, [proofInfo]);
-
-  // const { data: proof, isLoading: proofLoading }: {data?: string, isLoading: boolean} = useContractRead({
-  //   address: SMART_CONTRACT_ADDRESS,
-  //   abi: GoalsABI,
-  //   functionName: "getProofOfGroupByIndex",
-  //   args: [name, indexOfProof],
-  //   enabled: (!!name && !!groupExists && indexOfProof > 0)
-  // });
-
-  // console.log({hasProof, proof, proofInfo})
+  console.log({proof, proofLoading, isError})
 
 
   const approve = () => {
@@ -86,8 +67,6 @@ export function OnchainUserItem({name, groupExists, numberOfMembers, step, index
   const viewProof = () => {
 
   };
-
-  console.log({memberInfo, membersLoading});
 
   const renderListActions = () => {
     switch(step) {

@@ -16,6 +16,7 @@ contract Goals {
 
         address groupOwner;
         int96 numberMembers;
+        int96 numberProofs;
         int96 numberVotes;
         Stake[] members;
         Proof[] proofs;
@@ -119,6 +120,7 @@ contract Goals {
             source: msg.sender,
             proof: _proof
         }));
+        groups[_groupName].numberProofs++;
         emit ProofSubmitted(_groupName, msg.sender, _proof);
     }
 
