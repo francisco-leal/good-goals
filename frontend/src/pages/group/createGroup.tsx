@@ -1,12 +1,47 @@
-import { useState, FormEvent } from "react";
-import Link from "next/link";
-import SponsoredTransaction from "@/components/SponsoredTransaction";
+import { useState, FormEvent, useEffect } from "react";
+import { Typography, Input, Button, Textarea } from "@ensdomains/thorin";
+import { NextSeo } from "next-seo";
+import { useContractWrite, useWaitForTransaction } from "wagmi";
+import { SMART_CONTRACT_ADDRESS } from "@/lib/constants";
+import GoalsABI from "@/lib/abi/Goals.json";
+import { toast } from "react-toastify";
+import { parseEther } from "viem";
+import { useRouter } from "next/router";
 
 export default function CreateGroup() {
+  const router = useRouter();
   const [groupName, setGroupName] = useState("");
   const [groupDescription, setGroupDescription] = useState("");
   const [buyIn, setBuyIn] = useState("");
   const [duration, setDuration] = useState("");
+
+  const {
+    data: txData,
+    writeAsync: createGroup,
+    isLoading: isLoadingCreateGoal
+  } = useContractWrite({
+    address: SMART_CONTRACT_ADDRESS,
+    abi: GoalsABI,
+    functionName: "createGroup",
+    onSuccess: () => {
+      toast("Transaction submitted!");
+    },
+    onError: (err: any) => {
+      if (err?.shortMessage !== "User rejected the request.") {
+        toast.error("There was an error processing your transaction.");
+      }
+    },
+  });
+
+  const { status } = useWaitForTransaction({
+    hash: txData?.hash,
+  });
+
+  useEffect(() => {
+    if (status == "success") {
+      router.push(`/group/${groupName}`);
+    }
+  }, [status])
 
   const isFormValid =
     groupName !== "" &&
@@ -17,110 +52,61 @@ export default function CreateGroup() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (isFormValid) {
-      await new SponsoredTransaction().submit(groupName);
-      console.log({
-        groupName,
-        groupDescription,
-        buyIn,
-        duration,
-      });
+      const buyInInEther = parseEther(buyIn);
+      const durationInDays = parseInt(duration);
+
+      await createGroup({args: [groupName, durationInDays, buyInInEther]});
     }
   };
 
   return (
-    <div>
-      <div className="w-full h-[100vh] flex justify-center flex-col items-center ">
-        <div>
-          <Link href="/">
-          <svg
-            width="24"
-            height="24"
-            xmlns="http://www.w3.org/2000/svg"
-            fillRule="evenodd"
-            clipRule="evenodd"
-            className="absolute left-8 mt-2"
-          >
-            <path d="M2.117 12l7.527 6.235-.644.765-9-7.521 9-7.479.645.764-7.529 6.236h21.884v1h-21.883z" />
-          </svg>
-          </Link>
-          <h1 className="text-4xl font-bold">Create Group</h1>
-        </div>
-        <div className="mx-8">
-          <form className="max-w-md mx-auto mt-8" onSubmit={handleSubmit}>
-            <div className="mb-4">
-              <label
-                htmlFor="groupName"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Group Name
-              </label>
-              <input
-                type="text"
-                id="groupName"
-                className="mt-1 p-2 w-full border rounded-md"
-                value={groupName}
-                onChange={(e) => setGroupName(e.target.value)}
+    <div className="w-full h-[100vh] flex justify-center flex-col items-center ">
+      <NextSeo title={"Grow or Gamble | Create Group"} />
+      <Typography asProp='h1' weight='bold' fontVariant="headingOne" className='mb-4'>Create Group</Typography>
+      <div className="mx-8">
+        <form className="max-w-md mx-auto mt-8" onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <Input
+              label="Group Name"
+              placeholder="Apes Together Strong"
+              inputMode="text"
+              value={groupName}
+              onChange={(e) => setGroupName(e.target.value)}
+            />
+          </div>
+          <div className="mb-4">
+            <Textarea
+              label="Group Description"
+              placeholder="The goal of this group is to..."
+              inputMode="text"
+              value={groupDescription}
+              onChange={(e) => setGroupDescription(e.target.value)}
+            />
+          </div>
+          <div className="flex ">
+            <div className="mr-2">
+              <Input
+                label="Buy In"
+                placeholder="100"
+                inputMode="numeric"
+                value={buyIn}
+                onChange={(e) => setBuyIn(e.target.value)}
               />
             </div>
-            <div className="mb-4">
-              <label
-                htmlFor="groupDescription"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Group Description
-              </label>
-              <input
-                type="text"
-                id="groupDescription"
-                className="mt-1 p-2 h-32 w-full border rounded-md"
-                value={groupDescription}
-                onChange={(e) => setGroupDescription(e.target.value)}
+            <div className="ml-2">
+              <Input
+                label="Duration"
+                placeholder="days"
+                inputMode="numeric"
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
               />
             </div>
-            <div className="flex ">
-              <div className="mr-2">
-                <label
-                  htmlFor="buyIn"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Buy In
-                </label>
-                <input
-                  type="text"
-                  id="buyIn"
-                  className="mt-1 p-2 w-full border rounded-md"
-                  value={buyIn}
-                  placeholder="Currency"
-                  onChange={(e) => setBuyIn(e.target.value)}
-                />
-              </div>
-              <div className="ml-2">
-                <label
-                  htmlFor="duration"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Duration
-                </label>
-                <input
-                  type="text"
-                  id="duration"
-                  className="mt-1 p-2 w-full border rounded-md"
-                  value={duration}
-                  placeholder="Days"
-                  onChange={(e) => setDuration(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              className="w-full mt-6 bg-ourPurple text-white rounded-md h-10 font-semibold"
-              disabled={!isFormValid}
-            >
-              Create Group
-            </button>
-          </form>
-        </div>
+          </div>
+          <Button type="submit" loading={isLoadingCreateGoal} disabled={!isFormValid || isLoadingCreateGoal} className="mt-4">
+            Create Group
+          </Button>
+        </form>
       </div>
     </div>
   );

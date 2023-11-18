@@ -77,11 +77,12 @@ export default function CreateGroup() {
   }
 
   return (
-    <div className="w-full h-[100vh] flex justify-center flex-col items-center px-8">
-        <NextSeo title={"Grow or Gamble | Set Goal"} />
-        <Typography asProp='h1' weight='bold' fontVariant="headingOne" className='mb-4'>Commit to Goal</Typography>
-        <form className="mx-8 mt-8 w-full" onSubmit={handleSubmit}>
-          <div className="mb-4">
+    <div className="w-full h-[100vh] flex justify-center flex-col items-center ">
+      <NextSeo title={"Grow or Gamble | Set Goal"} />
+      <Typography asProp='h1' weight='bold' fontVariant="headingOne" className='mb-4'>Set Goal</Typography>
+      <div className="mx-8 min-w-full">
+        <form className="max-w-md mx-auto mt-8" onSubmit={handleSubmit}>
+        <div className="mb-4">
             <Input
               label="Title"
               placeholder="Be the best ape"
@@ -104,5 +105,6 @@ export default function CreateGroup() {
           </Button>
         </form>
       </div>
+    </div>
   );
 }

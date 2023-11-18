@@ -1,20 +1,18 @@
 import { NextSeo } from 'next-seo'
 import { useRouter } from 'next/router'
-import { useState } from 'react'
+import { useState,useEffect } from 'react'
 
-import { Typography, Button, LeftArrowSVG, DocumentSVG } from '@ensdomains/thorin'
-import { ConnectButton } from '@/components/ConnectButton'
-import { Container, Layout } from '@/components/templates'
-import { NavTop, MainContent } from '@/components/Goal';
+import { Typography, Button, DocumentSVG } from '@ensdomains/thorin'
+import { Container } from '@/components/templates'
+import { MainContent } from '@/components/Goal';
 import { NFTStorage, File, TokenType } from 'nft.storage';
 // @ts-ignore
 import mime from 'mime';
 
 import { toast } from 'react-toastify';
-import { useAccount, useContractWrite } from 'wagmi'
+import { useContractWrite, useWaitForTransaction } from 'wagmi'
 import GoalsABI from "@/lib/abi/Goals.json";
-
-const SMART_CONTRACT_ADDRESS = "0xfd24AEE56367A827f4f730180dd8E3060c6021dE"
+import { SMART_CONTRACT_ADDRESS } from "@/lib/constants";
 
 const nftstorage = new NFTStorage({ token: process.env.NEXT_PUBLIC_NFT_STORAGE_API_KEY || "" });
 
@@ -27,6 +25,7 @@ export const ipfsToURL = (ipfsAddress: string) => {
 
 export default function Page() {
   const router = useRouter()
+  const { name } = router.query
   const [metadata, setMetadata] = useState<TokenType<{ image: File; name: string; description: string; }>>();
   const {
     data: submitProofTx,
@@ -46,11 +45,35 @@ export default function Page() {
     },
   });
 
+  const { status: submitStatus } = useWaitForTransaction({
+    hash: submitProofTx?.hash,
+  });
+
+  useEffect(() => {
+    if (submitStatus === "success") {
+      router.push(`/group/${name}`);
+    }
+  }, [submitStatus])
+
   const fileToNFTStorageFormat = async (file: any) => {
     const buffer = await file.arrayBuffer();
     const type = mime.getType(file.name) || undefined;
     return new File([buffer], file.name, { type });
   };
+
+  const linkToImage = async (uploadedImageMetadata: { url: string }) => {
+    if (!uploadedImageMetadata) return;
+
+    const url = ipfsToURL(uploadedImageMetadata.url);
+    const result = await fetch(url);
+    const content = await result.json();
+
+    if (content.image) {
+      return ipfsToURL(content.image);
+    } else {
+      return;
+    }
+  }
 
   const handleUpload = async (event:any) => {
     event.preventDefault();
@@ -71,36 +94,20 @@ export default function Page() {
 
       setMetadata(uploadedImageMetadata);
       console.log('NFT metadata:', uploadedImageMetadata);
+
+      const link = await linkToImage(uploadedImageMetadata)
+      await submitProof({args: [name, link]})
+
     } catch (error) {
       console.error('Error uploading file:', error);
     }
   };
 
-  const linkToImage = async () => {
-    if (!metadata) return;
-
-    const url = ipfsToURL(metadata.url);
-    const result = await fetch(url);
-    const content = await result.json();
-
-    if (content.image) {
-      return ipfsToURL(content.image);
-    } else {
-      return;
-    }
-  }
-
   return (
     <>
       <NextSeo title={"Upload"} />
-      <Layout>
+      <div className="w-full h-[100vh] flex justify-center flex-col items-center ">
         <Container as="main" $variant="flexVerticalCenter">
-          <NavTop>
-            <Button colorStyle='transparent' shape="square" onClick={() => router.back()}>
-              <LeftArrowSVG />
-            </Button>
-            <ConnectButton />
-          </NavTop>
           <MainContent>
             <Typography>Upload Proof</Typography>
             <div className="flex justify-center items-center border border-gray-300 bg-white p-4 rounded-lg my-4">
@@ -117,12 +124,11 @@ export default function Page() {
                   hover:file:bg-violet-100
                 "/>
               </label>
-              <Button disabled={!metadata}>Upload</Button>
+              <Button type="submit" disabled={!!metadata || isLoadingSubmitProof}>Upload</Button>
             </form>
           </MainContent>
         </Container>
-        <footer />
-      </Layout>
+      </div>
     </>
   )
 }
