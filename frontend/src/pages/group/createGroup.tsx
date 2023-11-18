@@ -1,8 +1,6 @@
-import { useState, FormEvent, useEffect } from "react";
+import { useState, FormEvent } from "react";
 import { Typography, Input, Button, Textarea } from "@ensdomains/thorin";
 import { NextSeo } from "next-seo";
-import { useContractWrite, useWaitForTransaction } from "wagmi";
-import { SMART_CONTRACT_ADDRESS } from "@/lib/constants";
 import GoalsABI from "@/lib/abi/Goals.json";
 import { toast } from "react-toastify";
 import { parseEther } from "viem";
@@ -15,34 +13,7 @@ export default function CreateGroup() {
   const [groupDescription, setGroupDescription] = useState("");
   const [buyIn, setBuyIn] = useState("");
   const [duration, setDuration] = useState("");
-
-  const {
-    data: txData,
-    writeAsync: createGroup,
-    isLoading: isLoadingCreateGoal
-  } = useContractWrite({
-    address: SMART_CONTRACT_ADDRESS,
-    abi: GoalsABI,
-    functionName: "createGroup",
-    onSuccess: () => {
-      toast("Transaction submitted!");
-    },
-    onError: (err: any) => {
-      if (err?.shortMessage !== "User rejected the request.") {
-        toast.error("There was an error processing your transaction.");
-      }
-    },
-  });
-
-  const { status } = useWaitForTransaction({
-    hash: txData?.hash,
-  });
-
-  useEffect(() => {
-    if (status == "success") {
-      router.push(`/group/${groupName}`);
-    }
-  }, [status])
+  const [isLoadingCreateGoal, setLoadingCreateGoal] = useState(false);
 
   const isFormValid =
     groupName !== "" &&
@@ -56,7 +27,16 @@ export default function CreateGroup() {
       const buyInInEther = parseEther(buyIn);
       const durationInDays = parseInt(duration);
 
-      await new SponsoredTransaction(GoalsABI).submit(groupName, buyInInEther, durationInDays);
+      setLoadingCreateGoal(true);
+      new SponsoredTransaction(GoalsABI).submit('createGroup', groupName, buyInInEther, durationInDays).then(() => {
+        toast("Transaction submitted!");
+        router.push(`/group/${groupName}`);
+      }).catch((error) => {
+        console.log(error);
+        toast.error("There was an error processing your transaction.");
+      }).finally(() => {
+        setLoadingCreateGoal(false);
+      })
     }
   };
 

@@ -1,20 +1,20 @@
-import { getAccountNonce } from "permissionless"
-import { UserOperation, bundlerActions, getSenderAddress, getUserOperationHash, waitForUserOperationReceipt, GetUserOperationReceiptReturnType, signUserOperationHashWithECDSA } from "permissionless"
+import { UserOperation, bundlerActions, getSenderAddress, signUserOperationHashWithECDSA } from "permissionless"
 import { pimlicoBundlerActions, pimlicoPaymasterActions } from "permissionless/actions/pimlico"
-import {Address, Hash, concat, createClient, createPublicClient, encodeFunctionData, http, Hex, Abi} from "viem"
-import { generatePrivateKey, privateKeyToAccount, signMessage } from "viem/accounts"
+import {concat, createClient, createPublicClient, encodeFunctionData, http, Hex} from "viem"
+import { generatePrivateKey, privateKeyToAccount } from "viem/accounts"
 import { celoAlfajores } from "viem/chains"
+import {SMART_CONTRACT_ADDRESS} from "@/lib/constants";
 
 
 class SponsoredTransaction {
 
-    private readonly abi: Abi;
+    private readonly abi;
 
-    constructor(abi: Abi) {
+    constructor(abi: any) {
         this.abi = abi;
     }
 
-    async submit(...args) {
+    async submit(functionToCall: string, ...args: any[]) {
         console.log('Trying to create sponsored tx');
 
         // CREATE THE CLIENTS
@@ -72,11 +72,12 @@ class SponsoredTransaction {
         console.log("Calculated sender address:", senderAddress)
 
         // GENERATE THE CALLDATA
-        const to = "0xab26aE0ebC6EF51D764f63c244b773fE73EC38E8" // vitalik
+        const to = SMART_CONTRACT_ADDRESS // vitalik
         const value = BigInt(0)
 
+        const functionAbi = this.abi.filter((fn1: any) => fn1.name === functionToCall);
         const createGroupData = encodeFunctionData({
-            abi: this.abi,
+            abi: functionAbi,
             args: args
         })
 
@@ -100,8 +101,6 @@ class SponsoredTransaction {
         console.log("Generated callData:", callData)
 
         // FILL OUT REMAINING USER OPERATION VALUES
-        const gasPricePublic = await publicClient.getGasPrice();
-        console.log("Gas Price 2: " + gasPricePublic);
         const gasPrice = await bundlerClient.getUserOperationGasPrice()
 
         // console.log("Gas Price:", gasPrice)
@@ -110,8 +109,8 @@ class SponsoredTransaction {
             nonce: BigInt(0),
             initCode,
             callData,
-            maxFeePerGas: gasPricePublic,
-            maxPriorityFeePerGas: gasPricePublic,
+            maxFeePerGas: gasPrice.fast.maxFeePerGas,
+            maxPriorityFeePerGas: gasPrice.fast.maxPriorityFeePerGas,
             // dummy signature, needs to be there so the SimpleAccount doesn't immediately revert because of invalid signature length
             signature: "0xa15569dd8f8324dbeabf8073fdec36d4b754f53ce5901e283c6de79af177dc94557fa3c9922cd7af2a96ca94402d35c39f266925ee6407aeb32b31d76978d4ba1c" as Hex
         }
@@ -154,7 +153,7 @@ class SponsoredTransaction {
         const receipt = await bundlerClient.waitForUserOperationReceipt({ hash: userOperationHash })
         const txHash = receipt.receipt.transactionHash
 
-        console.log(`UserOperation included: https://goerli.lineascan.build/tx/${txHash}`)
+        console.log(`UserOperation included: https://alfajores.celoscan.io//tx/${txHash}`)
     }
 
 }
