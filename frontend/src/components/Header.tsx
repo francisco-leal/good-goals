@@ -8,7 +8,8 @@ export const Header = ({ theme, setTheme }: { theme: string, setTheme: (newTheme
     <header className="fixed w-full top-0 border-b-2 h-16 border-slate-300">
       <div className="container h-full flex justify-between items-center">
         <div className="ml-4">
-        <Button onClick={() => open()}>Connect Wallet</Button>  
+
+        <w3m-button balance='hide' />
         </div>
 
         <div className="mr-4 flex">
