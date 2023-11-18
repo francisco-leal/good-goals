@@ -78,7 +78,7 @@ export default function Page() {
 
   // onchain
   const { address } = useAccount();
-  const { data: groupExists } = useContractRead({
+  const { data: groupExists, isLoading: groupLoading } = useContractRead({
     address: SMART_CONTRACT_ADDRESS,
     abi: GoalsABI,
     functionName: "groupExists",
@@ -153,8 +153,6 @@ export default function Page() {
   const [step, setStep] = useState<Step>("distribute");
 
 
-  console.log("ADDRESS: ", address);
-
   const title = () => {
     if( name ) return name.toString();
     else return "Goal";
@@ -206,6 +204,70 @@ export default function Page() {
     toast.error("Approved!");
   }
 
+  const groupContent = () => {
+    return (
+      <MainContent>
+        <Typography asProp='h1' weight='bold' className='mb-4'>{name}</Typography>
+        <Typography asProp='p' fontVariant='body'>This group is for the true Apes, the holders of Ape Coin to hit their goals</Typography>
+        <TagRow>
+          <Tag colorStyle='bluePrimary'>$100 Buy in</Tag>
+          <Tag colorStyle='blueSecondary'>16 days left</Tag>
+        </TagRow>
+        <CreatorRow>
+          <div style={{ minWidth: '50px' }}>
+            <Avatar label='profile_picture' src={DEFAULT_IMAGE}/>
+          </div>
+          <Typography asProp='p' fontVariant='body'>Created by leal.eth</Typography>
+        </CreatorRow>
+        <Divider/>
+        <MemberList>
+          <MemberRow>
+            <div style={{ minWidth: '50px' }}>
+              <Avatar label='profile_picture' src={DEFAULT_IMAGE}/>
+            </div>
+            <MemberDescription>
+              <Typography asProp='p' fontVariant='body'>leal.eth</Typography>
+              <Typography asProp='p' fontVariant='small'>Reach 10k followers on twitter</Typography>
+            </MemberDescription>
+            {renderListActions()}
+          </MemberRow>
+          <MemberRow>
+            <div style={{ minWidth: '50px' }}>
+              <Avatar label='profile_picture' src={DEFAULT_IMAGE}/>
+            </div>
+            <MemberDescription>
+              <Typography asProp='p' fontVariant='body'>leal.eth</Typography>
+              <Typography asProp='p' fontVariant='small'>Reach 10k followers on twitter</Typography>
+            </MemberDescription>
+            {renderListActions()}
+          </MemberRow>
+          <MemberRow>
+            <div style={{ minWidth: '50px' }}>
+              <Avatar label='profile_picture' src={DEFAULT_IMAGE}/>
+            </div>
+            <MemberDescription>
+              <Typography asProp='p' fontVariant='body'>leal.eth</Typography>
+              <Typography asProp='p' fontVariant='small'>Reach 10k followers on twitter</Typography>
+            </MemberDescription>
+            {renderListActions()}
+          </MemberRow>
+        </MemberList>
+        {renderActionButton()}
+      </MainContent>
+    )
+  }
+
+  const noGroupContent = () => {
+    return (
+      <MainContent>
+        <Typography asProp='h1' weight='bold' className='mb-4'>{name}</Typography>
+        <Typography asProp='p' fontVariant='body'>This group does not exist yet. You must create it first.</Typography>
+      </MainContent>
+    )
+  }
+
+  if (groupLoading) return <div>Loading...</div>;
+
   return (
     <>
       <NextSeo title={title()} />
@@ -217,54 +279,7 @@ export default function Page() {
             </Button>
             <ConnectButton />
           </NavTop>
-          <MainContent>
-            <Typography asProp='h1' weight='bold' className='mb-4'>{name}</Typography>
-            <Typography asProp='p' fontVariant='body'>This group is for the true Apes, the holders of Ape Coin to hit their goals</Typography>
-            <TagRow>
-              <Tag colorStyle='bluePrimary'>$100 Buy in</Tag>
-              <Tag colorStyle='blueSecondary'>16 days left</Tag>
-            </TagRow>
-            <CreatorRow>
-              <div style={{ minWidth: '50px' }}>
-                <Avatar label='profile_picture' src={DEFAULT_IMAGE}/>
-              </div>
-              <Typography asProp='p' fontVariant='body'>Created by leal.eth</Typography>
-            </CreatorRow>
-            <Divider/>
-            <MemberList>
-              <MemberRow>
-                <div style={{ minWidth: '50px' }}>
-                  <Avatar label='profile_picture' src={DEFAULT_IMAGE}/>
-                </div>
-                <MemberDescription>
-                  <Typography asProp='p' fontVariant='body'>leal.eth</Typography>
-                  <Typography asProp='p' fontVariant='small'>Reach 10k followers on twitter</Typography>
-                </MemberDescription>
-                {renderListActions()}
-              </MemberRow>
-              <MemberRow>
-                <div style={{ minWidth: '50px' }}>
-                  <Avatar label='profile_picture' src={DEFAULT_IMAGE}/>
-                </div>
-                <MemberDescription>
-                  <Typography asProp='p' fontVariant='body'>leal.eth</Typography>
-                  <Typography asProp='p' fontVariant='small'>Reach 10k followers on twitter</Typography>
-                </MemberDescription>
-                {renderListActions()}
-              </MemberRow>
-              <MemberRow>
-                <div style={{ minWidth: '50px' }}>
-                  <Avatar label='profile_picture' src={DEFAULT_IMAGE}/>
-                </div>
-                <MemberDescription>
-                  <Typography asProp='p' fontVariant='body'>leal.eth</Typography>
-                  <Typography asProp='p' fontVariant='small'>Reach 10k followers on twitter</Typography>
-                </MemberDescription>
-                {renderListActions()}
-              </MemberRow>
-            </MemberList>
-            {renderActionButton()}
-          </MainContent>
+          {groupExists ? groupContent() : noGroupContent()}
         </Container>
         <footer />
       </Layout>

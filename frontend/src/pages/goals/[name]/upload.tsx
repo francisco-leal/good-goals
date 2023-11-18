@@ -16,7 +16,7 @@ import GoalsABI from "@/lib/abi/Goals.json";
 
 const SMART_CONTRACT_ADDRESS = "0xfd24AEE56367A827f4f730180dd8E3060c6021dE"
 
-const nftstorage = new NFTStorage({ token: process.env.NFT_STORAGE_API_KEY || "" });
+const nftstorage = new NFTStorage({ token: process.env.NEXT_PUBLIC_NFT_STORAGE_API_KEY || "" });
 
 export const ipfsToURL = (ipfsAddress: string) => {
   if (ipfsAddress.includes("http")) {
