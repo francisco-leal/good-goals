@@ -1,6 +1,3 @@
-import { NextSeo } from "next-seo";
-import Header from "@/components/Header";
-import { ConnectButton } from "@/components/ConnectButton";
 import { useState, FormEvent } from "react";
 import Link from "next/link";
 
@@ -30,7 +27,6 @@ export default function CreateGroup() {
 
   return (
     <div>
-      <Header />
       <div className="w-full h-[100vh] flex justify-center flex-col items-center ">
         <div>
           <Link href="/">

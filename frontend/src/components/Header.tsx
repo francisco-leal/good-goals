@@ -1,24 +1,15 @@
 // Header.js
+import { ConnectButton } from "./ConnectButton";
 
-import { useTheme } from "next-themes";
-import { useAccount } from "wagmi";
-import CustomConnect from "@/components/CustomConnect";
-
-const Header = () => {
-  const { isConnected } = useAccount();
-  const { theme, setTheme } = useTheme();
+export const Header = ({ theme, setTheme }: { theme: string, setTheme: (newTheme: string) => void}) => {
   return (
     <header className="fixed w-full top-0 border-b-2 h-16 border-slate-300">
       <div className="container h-full flex justify-between items-center">
         <div className="ml-4">
-        {isConnected ? (
-               <CustomConnect />
-          ) : ( <h1 className="font-bold">Logo</h1>)}
-          
+          <ConnectButton />    
         </div>
 
         <div className="mr-4 flex">
-    
           {theme === "light" ? (
             <svg
             onClick={() => setTheme("dark")}

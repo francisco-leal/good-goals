@@ -2,14 +2,12 @@ import CustomConnect from "@/components/CustomConnect";
 import { NextSeo } from "next-seo";
 import { useAccount } from "wagmi";
 import Link from "next/link";
-import Header from "@/components/Header";
 
 export default function Home() {
   const { address, isConnected } = useAccount();
 
   return (
     <div className="w-full h-[100vh] flex justify-center flex-col items-center">
-      <Header />
       {isConnected ? (
         <div className="w-full h-[100vh] flex  flex-col items-center justify-around">
           <h1 className="mb-4 text-5xl text-center font-bold">Group Goals</h1>

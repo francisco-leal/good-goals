@@ -1,7 +1,7 @@
 import '@rainbow-me/rainbowkit/styles.css'
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit'
 import { ThemeProvider } from 'styled-components'
-import { ThorinGlobalStyles, lightTheme } from '@ensdomains/thorin'
+import { ThorinGlobalStyles, lightTheme, darkTheme } from '@ensdomains/thorin'
 import { WagmiConfig } from 'wagmi'
 import type { AppProps } from 'next/app'
 
@@ -12,20 +12,32 @@ import { useIsMounted } from '@/hooks/useIsMounted'
 import SEO from '../next-seo.config'
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useState } from 'react'
+import {Header} from '@/components/Header'
 
 export default function App({ Component, pageProps }: AppProps) {
   const isMounted = useIsMounted()
+  const [theme, setTheme] = useState<string>("light");
+
+  const changeTheme = (newTheme: string) => {
+    if(newTheme == "light") {
+      setTheme("dark");
+    } else {
+      setTheme("light");
+    }
+  }
 
   return (
     <WagmiConfig config={wagmiConfig}>
-      <ThemeProvider theme={lightTheme}>
-        <ThorinGlobalStyles />
-        <ToastContainer />
-        <RainbowKitProvider chains={chains}>
+      <RainbowKitProvider chains={chains}>
+        <ThemeProvider theme={theme === "light" ? lightTheme : darkTheme}>
+          <ThorinGlobalStyles />
+          <ToastContainer />
+          <Header theme={theme} setTheme={(t) => changeTheme(t)}/>
           <DefaultSeo {...SEO} />
           {isMounted && <Component {...pageProps} />}
-        </RainbowKitProvider>
-      </ThemeProvider>
+        </ThemeProvider>
+      </RainbowKitProvider>
     </WagmiConfig>
   )
 }
