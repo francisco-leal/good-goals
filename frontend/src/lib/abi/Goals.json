@@ -173,7 +173,45 @@
         "type": "string"
       }
     ],
+    "name": "getGroupOwner",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_groupName",
+        "type": "string"
+      }
+    ],
     "name": "getMembers",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "",
+        "type": "address[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_groupName",
+        "type": "string"
+      }
+    ],
+    "name": "getProofs",
     "outputs": [
       {
         "components": [
@@ -184,21 +222,11 @@
           },
           {
             "internalType": "string",
-            "name": "goalTitle",
+            "name": "proof",
             "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "goalDescription",
-            "type": "string"
-          },
-          {
-            "internalType": "uint256",
-            "name": "stake",
-            "type": "uint256"
           }
         ],
-        "internalType": "struct Goals.Stake[]",
+        "internalType": "struct Goals.Proof[]",
         "name": "",
         "type": "tuple[]"
       }

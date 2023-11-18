@@ -1,21 +1,18 @@
 import { NextSeo } from 'next-seo'
 import { useRouter } from 'next/router'
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import {
   Typography,
   Button,
-  LeftArrowSVG,
   Tag,
   Avatar,
   CheckSVG,
   CrossSVG,
   MagnifyingGlassSVG
 } from '@ensdomains/thorin'
-import { ConnectButton } from '@/components/ConnectButton'
-import { Container, Layout } from '@/components/templates'
+import { Container } from '@/components/templates'
 import {
-  NavTop,
   MainContent,
   TagRow,
   CreatorRow,
@@ -25,19 +22,21 @@ import {
   MemberDescription
 } from '@/components/Goal';
 import { toast } from 'react-toastify';
-import { useAccount, useContractRead, useContractWrite } from 'wagmi'
+import { useAccount, useContractRead, useContractWrite, useEnsName, useEnsAvatar } from 'wagmi'
 import GoalsABI from "@/lib/abi/Goals.json";
+import { SMART_CONTRACT_ADDRESS } from "@/lib/constants";
+import { arrayToOnchainObject } from "@/lib/utils";
+import { formatEther } from 'viem'
 
-const SMART_CONTRACT_ADDRESS = "0xfd24AEE56367A827f4f730180dd8E3060c6021dE"
 const TOKEN_ADDRESS = "0x7d91e51c8f218f7140188a155f5c75388630b6a8"
 const DEFAULT_IMAGE = "https://ipfs.io/ipfs/bafybeigauplro2r3fyn5443z55dp2ze5mc5twl5jqeiurulyrnociqynkq/male-2-8-15-10-8-2-11-9.png";
 
 type Step = "join" | "wait" | "submit" | "start" | "distribute" | "";
-type StepComponent = (props: { submitStep: () => void }) => JSX.Element;
+type StepComponent = (props: { submitStep: () => void, isLoading?: boolean }) => JSX.Element;
 
-const JoinStep: StepComponent = ({submitStep}) => {
+const JoinStep: StepComponent = ({submitStep, isLoading}) => {
   return (
-    <Button className='mt-4' onClick={submitStep}>Join</Button>
+    <Button className='mt-4' onClick={submitStep} loading={isLoading}>Join</Button>
   )
 };
 
@@ -86,84 +85,82 @@ export default function Page() {
     enabled: !!name
   });
 
-  const { data: members } = useContractRead({
+  const { data: groupInformation, isLoading: groupInformationLoading } = useContractRead({
     address: SMART_CONTRACT_ADDRESS,
     abi: GoalsABI,
-    functionName: "getMembers",
+    functionName: "groups",
     args: [name],
-    enabled: !!name
+    enabled: (!!name && !!groupExists)
   });
 
+  const groupData = useMemo(() => {
+    // @ts-ignore
+    return arrayToOnchainObject(groupInformation || []);
+  }, [groupInformation])
+
+  const { data: ownerName, } = useEnsName({
+    address: groupData?.groupOwner,
+  })
+  const { data: ownerAvatar, } = useEnsAvatar({
+    name: ownerName,
+  })
+
   const {
-    data: joinTX,
-    writeAsync: joinGroup,
-    isLoading: isLoadingJoin
+    writeAsync: joinGroupWriteTX,
+    isLoading: isLoadingJoinGroup
   } = useContractWrite({
     address: SMART_CONTRACT_ADDRESS,
     abi: GoalsABI,
     functionName: "joinGroup",
     onSuccess: () => {
-      toast("Group joined!");
+      toast("Transaction submitted!");
     },
     onError: (err: any) => {
       if (err?.shortMessage !== "User rejected the request.") {
         toast.error("There was an error processing your transaction.");
       }
-    }
+    },
   });
 
-  const {
-    data: vetoTx,
-    writeAsync: vetoProof,
-    isLoading: isLoadingVeto
-  } = useContractWrite({
-    address: SMART_CONTRACT_ADDRESS,
-    abi: GoalsABI,
-    functionName: "submitVetos",
-    onSuccess: () => {
-      toast("vetos submitted!");
-    },
-    onError: (err: any) => {
-      if (err?.shortMessage !== "User rejected the request.") {
-        toast.error("There was an error processing your transaction.");
+  useEffect(() => {
+    if(groupData.exists) {
+      if (groupData.endTime == 0) {
+        if (groupData.groupOwner === address && groupData.numberMembers > 0) {
+          setStep("wait")
+        } else {
+          setStep("join")
+        }
+      } else {
+        setStep("submit")
       }
     }
-  });
-
-  const {
-    data: distributeTx,
-    writeAsync: distribute,
-    isLoading: isLoadingDistribute
-  } = useContractWrite({
-    address: SMART_CONTRACT_ADDRESS,
-    abi: GoalsABI,
-    functionName: "distribute",
-    onSuccess: () => {
-      toast("fund distributed!");
-    },
-    onError: (err: any) => {
-      if (err?.shortMessage !== "User rejected the request.") {
-        toast.error("There was an error processing your transaction.");
-      }
-    }
-  });
+  }, [groupData]);
 
   // component state
-  const [loading, setLoading] = useState<boolean>(false);
-  const [step, setStep] = useState<Step>("distribute");
+  const [step, setStep] = useState<Step>("wait");
 
+  console.log({
+    step,
+    groupData,
+    ownerName,
+    ownerAvatar
+  })
 
   const title = () => {
     if( name ) return name.toString();
-    else return "Goal";
+    else return "Group";
   }
+
+  const joinGroup = async () => {
+    // joinGroupWriteTX({args: [name]})
+  };
 
   const renderActionButton = () => {
     switch(step) {
       case "wait":
         return <WaitStep submitStep={() => null}/>
       case "join":
-        return <JoinStep submitStep={() => setStep("wait")}/>
+        return <JoinStep submitStep={() => joinGroup()} isLoading={isLoadingJoinGroup}/>
       case "submit":
         return <SubmitStep submitStep={() => setStep("distribute")}/>
       case "start":
@@ -210,48 +207,52 @@ export default function Page() {
         <Typography asProp='h1' weight='bold' className='mb-4'>{name}</Typography>
         <Typography asProp='p' fontVariant='body'>This group is for the true Apes, the holders of Ape Coin to hit their goals</Typography>
         <TagRow>
-          <Tag colorStyle='bluePrimary'>$100 Buy in</Tag>
-          <Tag colorStyle='blueSecondary'>16 days left</Tag>
+          {/* @ts-ignore */ }
+          {!!groupData.baseAmount && <Tag colorStyle='bluePrimary'>{formatEther(groupData.baseAmount)} ETH Buy in</Tag>}
+          {(!!groupData.durationDays && !groupData.endTime) && <Tag colorStyle='blueSecondary'>{Number(groupData.durationDays)} days</Tag>}
+          {(!!groupData.durationDays && !!groupData.endTime) && <Tag colorStyle='blueSecondary'>{groupData.durationDays} days left</Tag>}
         </TagRow>
         <CreatorRow>
           <div style={{ minWidth: '50px' }}>
-            <Avatar label='profile_picture' src={DEFAULT_IMAGE}/>
+            <Avatar label='profile_picture' src={ownerAvatar || DEFAULT_IMAGE}/>
           </div>
-          <Typography asProp='p' fontVariant='body'>Created by leal.eth</Typography>
+          <Typography asProp='p' fontVariant='body'>Created by {ownerName || groupData.groupOwner}</Typography>
         </CreatorRow>
         <Divider/>
-        <MemberList>
-          <MemberRow>
-            <div style={{ minWidth: '50px' }}>
-              <Avatar label='profile_picture' src={DEFAULT_IMAGE}/>
-            </div>
-            <MemberDescription>
-              <Typography asProp='p' fontVariant='body'>leal.eth</Typography>
-              <Typography asProp='p' fontVariant='small'>Reach 10k followers on twitter</Typography>
-            </MemberDescription>
-            {renderListActions()}
-          </MemberRow>
-          <MemberRow>
-            <div style={{ minWidth: '50px' }}>
-              <Avatar label='profile_picture' src={DEFAULT_IMAGE}/>
-            </div>
-            <MemberDescription>
-              <Typography asProp='p' fontVariant='body'>leal.eth</Typography>
-              <Typography asProp='p' fontVariant='small'>Reach 10k followers on twitter</Typography>
-            </MemberDescription>
-            {renderListActions()}
-          </MemberRow>
-          <MemberRow>
-            <div style={{ minWidth: '50px' }}>
-              <Avatar label='profile_picture' src={DEFAULT_IMAGE}/>
-            </div>
-            <MemberDescription>
-              <Typography asProp='p' fontVariant='body'>leal.eth</Typography>
-              <Typography asProp='p' fontVariant='small'>Reach 10k followers on twitter</Typography>
-            </MemberDescription>
-            {renderListActions()}
-          </MemberRow>
-        </MemberList>
+        {groupData.numberMembers > 0 ?
+          <MemberList>
+            <MemberRow>
+              <div style={{ minWidth: '50px' }}>
+                <Avatar label='profile_picture' src={DEFAULT_IMAGE}/>
+              </div>
+              <MemberDescription>
+                <Typography asProp='p' fontVariant='body'>leal.eth</Typography>
+                <Typography asProp='p' fontVariant='small'>Reach 10k followers on twitter</Typography>
+              </MemberDescription>
+              {renderListActions()}
+            </MemberRow>
+            <MemberRow>
+              <div style={{ minWidth: '50px' }}>
+                <Avatar label='profile_picture' src={DEFAULT_IMAGE}/>
+              </div>
+              <MemberDescription>
+                <Typography asProp='p' fontVariant='body'>leal.eth</Typography>
+                <Typography asProp='p' fontVariant='small'>Reach 10k followers on twitter</Typography>
+              </MemberDescription>
+              {renderListActions()}
+            </MemberRow>
+            <MemberRow>
+              <div style={{ minWidth: '50px' }}>
+                <Avatar label='profile_picture' src={DEFAULT_IMAGE}/>
+              </div>
+              <MemberDescription>
+                <Typography asProp='p' fontVariant='body'>leal.eth</Typography>
+                <Typography asProp='p' fontVariant='small'>Reach 10k followers on twitter</Typography>
+              </MemberDescription>
+              {renderListActions()}
+            </MemberRow>
+          </MemberList> : <Typography className="mt-2">Be the first to join the group!</Typography>
+        }
         {renderActionButton()}
       </MainContent>
     )
@@ -271,18 +272,12 @@ export default function Page() {
   return (
     <>
       <NextSeo title={title()} />
-      <Layout>
+      <div className="w-full h-[100vh] flex justify-center flex-col items-center ">
         <Container as="main" $variant="flexVerticalCenter">
-          <NavTop>
-            <Button colorStyle='transparent' shape="square" onClick={() => router.back()}>
-              <LeftArrowSVG />
-            </Button>
-            <ConnectButton />
-          </NavTop>
           {groupExists ? groupContent() : noGroupContent()}
         </Container>
         <footer />
-      </Layout>
+      </div>
     </>
   )
 }
