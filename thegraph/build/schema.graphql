@@ -1,0 +1,52 @@
+type GroupCreated @entity(immutable: true) {
+  id: Bytes!
+  groupName: String! # string
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type GroupDistributed @entity(immutable: true) {
+  id: Bytes!
+  groupName: String! # string
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type GroupJoined @entity(immutable: true) {
+  id: Bytes!
+  groupName: String! # string
+  member: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type GroupStarted @entity(immutable: true) {
+  id: Bytes!
+  groupName: String! # string
+  endTime: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type ProofSubmitted @entity(immutable: true) {
+  id: Bytes!
+  groupName: String! # string
+  member: Bytes! # address
+  proof: String! # string
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type VoteSubmitted @entity(immutable: true) {
+  id: Bytes!
+  groupName: String! # string
+  member: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
