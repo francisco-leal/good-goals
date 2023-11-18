@@ -10,7 +10,7 @@ if (!WALLETCONNECT_ID) {
 }
 
 
-export const chains = [celoAlfajores, goerli, baseGoerli, arbitrumGoerli]
+export const chains = [arbitrumGoerli]
 
 const { publicClient, webSocketPublicClient } = configureChains(chains, [
   publicProvider(),

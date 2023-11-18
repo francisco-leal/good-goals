@@ -89,7 +89,7 @@ export default function Page() {
     address: SMART_CONTRACT_ADDRESS,
     abi: GoalsABI.abi,
     functionName: "groupExists",
-    args: [name],
+    args: ["TurkishDilemma"],
     enabled: !!name
   });
 
@@ -111,7 +111,7 @@ export default function Page() {
     abi: GoalsABI.abi,
     functionName: "getMembers",
     args: [name],
-    enabled: (!!name && !!groupExists && groupData.numberMembers > 0)
+    enabled: (!!name && !!groupExists && groupData?.numberMembers > 0)
   });
 
   const { data: allProofs }: {data?: string[], isLoading: boolean, isError: boolean} = useContractRead({
@@ -134,7 +134,7 @@ export default function Page() {
   useEffect(() => {
     if(groupData.exists) {
       if (groupData.endTime == 0) {
-        if (groupData.groupOwner === address && groupData.numberMembers > 0) {
+        if (groupData.groupOwner === address && groupData?.numberMembers > 0) {
           setStep("start")
         } else {
           if (memberInfo && address && memberInfo.includes(address)) {
@@ -244,7 +244,7 @@ export default function Page() {
       setStep("vote")
     }
     //@ts-ignore
-  }, [allProofs, groupInformation.numberMembers, groupInformation.numberVotes]);
+  }, [allProofs, groupInformation?.numberMembers, groupInformation?.numberVotes]);
 
   const start = async () => {
     await startWrite({args: [name]})

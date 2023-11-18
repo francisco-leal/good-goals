@@ -37,6 +37,7 @@ module.exports = {
       alfajores: "9FYBMCJ8MJEF9Z6Y64MY9CBNF95KRE3VMJ",
       celo: "9FYBMCJ8MJEF9Z6Y64MY9CBNF95KRE3VMJ",
       baseGoerli: "29KPV447K5EVY6QTVKF4XXR87IUHSWX6DN",
+      arbitrumGoerli: "12"
     },
     customChains: [
       {
@@ -45,6 +46,14 @@ module.exports = {
         urls: {
           apiURL: "https://api-alfajores.celoscan.io/api",
           browserURL: "https://alfajores.celoscan.io"
+        }
+      },
+      {
+        network: "arbitrumGoerli",
+        chainId: 421613,
+        urls: {
+          apiURL: "https://api-goerli.arbiscan.io/api",
+          browserURL: "https://goerli.arbiscan.io/"
         }
       }
     ]
