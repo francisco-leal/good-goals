@@ -79,7 +79,7 @@ const StartStep: StepComponent = ({submitStep}) => {
   )
 }
 
-export default async function Page() {
+export default function Page() {
   // routing
   const router = useRouter()
   const { name } = router.query

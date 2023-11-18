@@ -8,7 +8,7 @@ import { useRouter } from "next/router";
 import SponsoredTransaction, {useSimpleAccount} from "@/components/SponsoredTransaction";
 import {useAccount} from "wagmi";
 
-export default async function () {
+export default function CreateGroup () {
   const router = useRouter();
   const { getSenderAddress, initCode } = useSimpleAccount();
   const { address: owner } = useAccount();

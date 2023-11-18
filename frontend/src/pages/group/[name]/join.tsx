@@ -9,7 +9,7 @@ import { NextSeo } from 'next-seo';
 import { parseEther } from 'viem';
 import SponsoredTransaction, {useSimpleAccount} from "@/components/SponsoredTransaction";
 
-export default async function CreateGroup() {
+export default function CreateGroup() {
   const router = useRouter()
   const { getSenderAddress, initCode } = useSimpleAccount();
   const [ address, setAddress ] = useState<`0x${string}`>();

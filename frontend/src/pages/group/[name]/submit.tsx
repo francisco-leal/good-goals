@@ -23,7 +23,7 @@ export const ipfsToURL = (ipfsAddress: string) => {
   return "https://ipfs.io/" + ipfsAddress.replace("://", "/");
 };
 
-export default async function Page() {
+export default function Page() {
   const router = useRouter()
   const { getSenderAddress, initCode} = useSimpleAccount();
   const { address: owner } = useAccount();
