@@ -203,8 +203,16 @@ contract Goals {
         return groups[_groupName].members[_index];
     }
 
-    function getProofs(string calldata _groupName) onlyValidGroup(_groupName) public view returns (Proof[] memory) {
-        return groups[_groupName].proofs;
+    function getProofs(string calldata _groupName) onlyValidGroup(_groupName) public view returns (address[] memory) {
+        address[] memory members = new address[](groups[_groupName].proofs.length);
+        for (uint256 i = 0; i < groups[_groupName].proofs.length; i++) {
+            members[i] = groups[_groupName].proofs[i].source;
+        }
+        return members;
+    }
+
+    function getProofOfGroupByIndex(string calldata _groupName, uint256 _index) onlyValidGroup(_groupName) public view returns (Proof memory) {
+        return groups[_groupName].proofs[_index];
     }
 
     modifier onlyValidGroup(string calldata _groupName) {
