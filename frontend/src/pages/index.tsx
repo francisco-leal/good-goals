@@ -1,11 +1,11 @@
 import CustomConnect from "@/components/CustomConnect";
 import { NextSeo } from "next-seo";
-import { useAccount } from "wagmi";
+import { useAccount, useWalletClient, type WalletClient } from "wagmi";
 import Link from "next/link";
 import { Button } from "@ensdomains/thorin";
-
+ 
 export default function Home() {
-  const { address, isConnected } = useAccount();
+  const { isConnected } = useAccount();
 
   return (
     <div className="w-full h-[100vh] flex justify-center flex-col items-center px-4">

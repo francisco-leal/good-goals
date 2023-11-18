@@ -14,6 +14,9 @@ import { useContractWrite, useWaitForTransaction } from 'wagmi'
 import GoalsABI from "@/lib/abi/Goals.json";
 import { SMART_CONTRACT_ADDRESS } from "@/lib/constants";
 
+import { PushAPI } from '@pushprotocol/restapi';
+import { ethers } from 'ethers'
+
 const nftstorage = new NFTStorage({ token: process.env.NEXT_PUBLIC_NFT_STORAGE_API_KEY || "" });
 
 export const ipfsToURL = (ipfsAddress: string) => {
@@ -75,6 +78,28 @@ export default function Page() {
     }
   }
 
+  const sendPushNotification = async() => {
+    const provider = new ethers.providers.JsonRpcProvider("https://sepolia.infura.io/v3/02e235213a214a77b7ac2030e86c0e1a");
+    const PK = "d8a10def7d17e73605e1f69c0f6ecbe3181412817ed4cd8c0339be2bc44d036a"
+    const wallet = new ethers.Wallet(PK, provider);
+
+    const userAlice = await PushAPI.initialize(wallet, {
+      // @ts-ignore
+      env: "staging",
+    });
+
+    console.log({userAlice})
+    const aliceInfo = await  userAlice.notification.list();
+    console.log({aliceInfo})
+    const aliceChats = await userAlice.chat.latest("0x7Dd39fc27537D14bE67250b79E594e71b8C2f4d2");
+    console.log({aliceChats})
+    // const channelInfo = await userAlice.channel.info();
+    // console.log({channelInfo})
+    const sendNotifRes = await userAlice.channel.send(['0x7Dd39fc27537D14bE67250b79E594e71b8C2f4d2'], {notification: {title:  'code test',body:  'much code test',},});
+    // const aliceChats = await userAlice.chat.latest("0x33041027dd8F4dC82B6e825FB37ADf8f15d44053");
+    console.log({sendNotifRes})
+  }
+
   const handleUpload = async (event:any) => {
     event.preventDefault();
     const fileInput = event.target.querySelector('input[type="file"]');
@@ -97,7 +122,7 @@ export default function Page() {
 
       const link = await linkToImage(uploadedImageMetadata)
       await submitProof({args: [name, link]})
-
+      sendPushNotification();
     } catch (error) {
       console.error('Error uploading file:', error);
     }
