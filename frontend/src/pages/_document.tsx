@@ -3,12 +3,13 @@ import Document, { Head, Html, Main, NextScript } from 'next/document'
 import type { AppPropsType, AppType } from 'next/dist/shared/lib/utils'
 import type { DocumentContext } from 'next/document'
 
+
 export default class MyDocument extends Document {
   render() {
     return (
       <Html lang="en">
         <Head />
-        <body>
+        <body className="dark:bg-gray-800">
           <Main />
           <NextScript />
         </body>
