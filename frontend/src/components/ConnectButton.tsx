@@ -43,7 +43,7 @@ export function ConnectButton() {
             {(() => {
               if (!connected) {
                 return (
-                  <StyledButton shape="rounded" onClick={openConnectModal}>
+                  <StyledButton shape="rounded" colorStyle="purpleGradient" onClick={openConnectModal}>
                     Connect
                   </StyledButton>
                 )
