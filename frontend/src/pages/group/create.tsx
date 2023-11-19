@@ -1,4 +1,4 @@
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useEffect } from "react";
 import { Typography, Input, Button, Textarea } from "@ensdomains/thorin";
 import { NextSeo } from "next-seo";
 import GoalsABI from "@/lib/abi/Goals.json";
@@ -6,6 +6,8 @@ import { toast } from "react-toastify";
 import { parseEther } from "viem";
 import { useRouter } from "next/router";
 import SponsoredTransaction from "@/components/SponsoredTransaction";
+import { useContractWrite, useWaitForTransaction } from "wagmi";
+import { SMART_CONTRACT_ADDRESS } from "@/lib/constants";
 
 export default function CreateGroup() {
   const router = useRouter();
@@ -13,7 +15,7 @@ export default function CreateGroup() {
   const [groupDescription, setGroupDescription] = useState("");
   const [buyIn, setBuyIn] = useState("");
   const [duration, setDuration] = useState("");
-  const [isLoadingCreateGoal, setLoadingCreateGoal] = useState(false);
+  const [loadingCreateGoal, setLoadingCreateGoal] = useState(false);
 
   const isFormValid =
     groupName !== "" &&
@@ -21,22 +23,42 @@ export default function CreateGroup() {
     buyIn !== "" &&
     duration !== "";
 
+  const {
+    data: txData,
+    writeAsync: createGroup,
+  } = useContractWrite({
+    address: SMART_CONTRACT_ADDRESS,
+    abi: GoalsABI,
+    functionName: "createGroup",
+    onSuccess: () => {
+      toast("Transaction submitted!");
+    },
+    onError: (err: any) => {
+      if (err?.shortMessage !== "User rejected the request.") {
+        toast.error("There was an error processing your transaction.");
+      }
+    },
+  });
+
+  const { status } = useWaitForTransaction({
+    hash: txData?.hash,
+  });
+
+  useEffect(() => {
+    if (status == "success") {
+      setLoadingCreateGoal(false);
+      router.push(`/group/${groupName}`);
+    }
+  }, [status])
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (isFormValid) {
+      setLoadingCreateGoal(true);
       const buyInInEther = parseEther(buyIn);
       const durationInDays = parseInt(duration);
 
-      setLoadingCreateGoal(true);
-      new SponsoredTransaction(GoalsABI).submit('createGroup', groupName, buyInInEther, durationInDays).then(() => {
-        toast("Transaction submitted!");
-        router.push(`/group/${groupName}`);
-      }).catch((error) => {
-        console.log(error);
-        toast.error("There was an error processing your transaction.");
-      }).finally(() => {
-        setLoadingCreateGoal(false);
-      })
+      await createGroup({args: [groupName, durationInDays, buyInInEther]});
     }
   };
 
@@ -84,7 +106,7 @@ export default function CreateGroup() {
               />
             </div>
           </div>
-          <Button type="submit" loading={isLoadingCreateGoal} disabled={!isFormValid || isLoadingCreateGoal} className="mt-4">
+          <Button type="submit" loading={loadingCreateGoal} disabled={!isFormValid || loadingCreateGoal} className="mt-4">
             Create Group
           </Button>
         </form>

@@ -1,6 +1,6 @@
 import { configureChains, createConfig } from 'wagmi'
 import { getDefaultWallets } from '@rainbow-me/rainbowkit'
-import { goerli, celoAlfajores } from 'wagmi/chains'
+import { goerli, celoAlfajores, baseGoerli, arbitrumGoerli } from 'wagmi/chains'
 import { publicProvider } from 'wagmi/providers/public'
 
 const WALLETCONNECT_ID = process.env.NEXT_PUBLIC_WALLETCONNECT_ID
@@ -10,7 +10,7 @@ if (!WALLETCONNECT_ID) {
 }
 
 
-export const chains = [celoAlfajores, goerli]
+export const chains = [arbitrumGoerli]
 
 const { publicClient, webSocketPublicClient } = configureChains(chains, [
   publicProvider(),

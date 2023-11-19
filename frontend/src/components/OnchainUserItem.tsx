@@ -2,10 +2,6 @@ import {
   Typography,
   Avatar,
   Tag,
-  Button,
-  MagnifyingGlassSVG,
-  CheckSVG,
-  CrossSVG
 } from '@ensdomains/thorin'
 import {
   MemberRow,
@@ -14,8 +10,7 @@ import {
 import { useContractRead, useAccount } from 'wagmi'
 import GoalsABI from "@/lib/abi/full-goals.json";
 import { SMART_CONTRACT_ADDRESS } from "@/lib/constants";
-import { toast } from 'react-toastify';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { shortAddress } from '@/lib/utils';
 
 type Props = {
@@ -30,7 +25,11 @@ type Props = {
   allProofs?: string[],
 }
 
-const DEFAULT_IMAGE = "https://ipfs.io/ipfs/bafybeigauplro2r3fyn5443z55dp2ze5mc5twl5jqeiurulyrnociqynkq/male-2-8-15-10-8-2-11-9.png";
+const DEFAULT_IMAGES = [
+  "https://i.seadn.io/gae/tKTl6AmyJgf4gKOCgQmE5zd4iRQ0G8YsAsxXzOAqcgGCFx9jV3PKz6ajOQiKmarBUmAPIwBdGI-amV03A955-hJAFvKl8eXvO4B4qQ?auto=format&dpr=1&w=1000",
+  "https://i.seadn.io/gcs/files/0411a6c5fc828c828b0b8346f5c2661a.png?auto=format&dpr=1&w=1000",
+  "https://i.seadn.io/gae/l4OW979vFhC9Ev-WLXEYaUDlhtWAwcY99evPCrhaT_S-jlQ8iI3dg-hrdYYgNoFagmlLjG6wsJmMxog02C6Jvuj6Q4vR6QptTqlQ?auto=format&dpr=1&w=1000"
+]
 
 type MemberInfo = {
   goalDescription: string,
@@ -60,6 +59,8 @@ export function OnchainUserItem({name, groupExists, numberOfMembers, step, index
     }
   }, [allProofs, memberInfo, memberInfo?.source]);
 
+  console.log({memberInfo, index});
+
   const { data: proof }: {data?: {proof: string, source: string }, isLoading: boolean, isError: boolean} = useContractRead({
     address: SMART_CONTRACT_ADDRESS,
     abi: GoalsABI.abi,
@@ -84,51 +85,27 @@ export function OnchainUserItem({name, groupExists, numberOfMembers, step, index
     }
   };
 
-  const renderListActions = () => {
-    switch(step) {
-      case "vote":
-        if (proof) {
-          return isSelf ? (
-            <Button colorStyle='transparent' shape="square" className='ml-auto'>
-              <MagnifyingGlassSVG />
-            </Button>
-          ) : (
-            <>
-              <Button colorStyle='transparent' shape="square" className='ml-auto' onClick={() => viewProof()}>
-                <MagnifyingGlassSVG />
-              </Button>
-              <Button colorStyle={approvalState ? 'greenPrimary' : 'greenSecondary'} shape="square" onClick={() => approve()}>
-                <CheckSVG />
-              </Button>
-              <Button colorStyle={approvalState ? 'redSecondary' : 'redPrimary'} shape="square" onClick={() => reject()}>
-                <CrossSVG />
-              </Button>
-            </>
-          )
-        } else {
-          return <Tag className="ml-auto" colorStyle="blueSecondary">Waiting for proof</Tag>
-        }
-      case "distribute":
-        return <>
-          <Button colorStyle='transparent' shape="square" className='ml-auto'>
-            <MagnifyingGlassSVG />
-          </Button>
-        </>
-      default:
-        return null;
+  const winnerTag = () => {
+    if (step == "finished" || step == "distribute") {
+      if(index == 0) {
+        return <><Tag className="ml-auto">Winner</Tag><Tag colorStyle="greenPrimary">3,000 $APE</Tag></>
+      } else {
+        return <Tag className="ml-auto" colorStyle="redPrimary">$0</Tag>
+      }
     }
+    return;
   }
 
   return (
     <MemberRow>
       <div style={{ minWidth: '50px' }}>
-        <Avatar label='profile_picture' src={DEFAULT_IMAGE}/>
+        <Avatar label='profile_picture' src={DEFAULT_IMAGES[index]}/>
       </div>
       <MemberDescription>
         <Typography asProp='p' fontVariant='body'>{shortAddress(memberInfo?.source || "")}</Typography>
-        <Typography asProp='p' fontVariant='small'>{memberInfo?.goalTitle}</Typography>
+        <Typography asProp='p' fontVariant='small'>Ape {`#143${index}`}</Typography>
       </MemberDescription>
-      {renderListActions()}
+      {winnerTag()}
     </MemberRow>
   )
 }

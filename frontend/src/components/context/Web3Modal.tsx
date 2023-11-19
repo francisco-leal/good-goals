@@ -3,7 +3,7 @@
 
 import { createWeb3Modal, defaultWagmiConfig } from '@web3modal/wagmi/react';
 import { WagmiConfig } from 'wagmi';
-import { celoAlfajores, mainnet } from 'viem/chains';
+import { celoAlfajores, mainnet, arbitrumGoerli } from 'viem/chains';
 
 // 1. Get projectId
 const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_ID || "";
@@ -16,7 +16,7 @@ const metadata = {
   icons: ['https://avatars.githubusercontent.com/u/37784886'],
 };
 
-const chains = [mainnet, celoAlfajores];
+const chains = [mainnet, arbitrumGoerli];
 const wagmiConfig = defaultWagmiConfig({ chains, projectId, metadata });
 
 // 3. Create modal

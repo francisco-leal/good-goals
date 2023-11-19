@@ -11,9 +11,10 @@ export const Header = ({
   setTheme: (newTheme: string) => void;
 }) => {
   const { open } = useWeb3Modal();
+
   return (
     <header className="fixed w-full top-0 border-b-2 h-16 border-slate-300">
-      <div className="h-full flex justify-end items-center gap-4 w-full">
+      <div className="h-full flex justify-end items-center gap-4 w-full pr-2">
         <div className="ml-4 mr-auto">
           <Typography>Grow or Gamble</Typography>
         </div>
@@ -31,14 +32,14 @@ export const Header = ({
             <Button
               colorStyle="transparent"
               shape="square"
-              className="ml-auto"
+              className="ml-auto mr-4"
               onClick={() => setTheme("light")}
             >
               <SunSVG />
             </Button>
           )}
         </div>
-        <w3m-button balance="hide" />
+        <w3m-button balance="hide"/>
       </div>
     </header>
   );
