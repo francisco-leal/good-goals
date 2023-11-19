@@ -15,7 +15,7 @@ export default function Home() {
         <div className="w-full h-[100vh] flex flex-col items-center justify-around">
           <h1 className="mb-4 text-5xl text-center font-bold">Gamble</h1>
           <div className="flex flex-col items-center gap-4">
-            <Link href={"/group/TurkishDilemma"} className="w-full">
+            <Link href={"/group/FinalDemo"} className="w-full">
               <Button>
                 Play Turkish Dilemma 🇹🇷
               </Button>

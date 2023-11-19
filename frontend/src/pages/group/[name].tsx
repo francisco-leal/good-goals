@@ -1,7 +1,6 @@
 import { NextSeo } from 'next-seo'
 import { useRouter } from 'next/router'
 import { useEffect, useMemo, useState } from 'react'
-
 import {
   Typography,
   Button,
@@ -16,23 +15,23 @@ import {
   Divider,
 } from '@/components/Goal';
 import { toast } from 'react-toastify';
-import { useAccount, useContractRead, useEnsName, useEnsAvatar, useContractWrite, useWaitForTransaction } from 'wagmi'
+import { useAccount, useContractRead, useEnsName, useEnsAvatar, useContractWrite, useWaitForTransaction, erc20ABI } from 'wagmi'
 // import GoalsABI from "@/lib/abi/Goals.json";
 import GoalsABI from "@/lib/abi/full-goals.json";
-import { SMART_CONTRACT_ADDRESS } from "@/lib/constants";
+import { SMART_CONTRACT_ADDRESS, ERC20_TOKEN_ADDRESS } from "@/lib/constants";
 import { arrayToOnchainObject } from "@/lib/utils";
-import { formatEther } from 'viem'
+import { formatEther, parseEther } from 'viem'
 import { OnchainUserItem } from '@/components/OnchainUserItem'
 import { shortAddress } from '@/lib/utils';
 
-const DEFAULT_IMAGE = "https://ipfs.io/ipfs/bafybeigauplro2r3fyn5443z55dp2ze5mc5twl5jqeiurulyrnociqynkq/male-2-8-15-10-8-2-11-9.png";
+const DEFAULT_IMAGE = "https://i.seadn.io/gae/tKTl6AmyJgf4gKOCgQmE5zd4iRQ0G8YsAsxXzOAqcgGCFx9jV3PKz6ajOQiKmarBUmAPIwBdGI-amV03A955-hJAFvKl8eXvO4B4qQ";
 
 type Step = "join" | "wait" | "submit" | "start" | "distribute" | "vote" | "done" | "";
 type StepComponent = (props: { submitStep: () => void, isLoading?: boolean }) => JSX.Element;
 
 const JoinStep: StepComponent = ({submitStep}) => {
   return (
-    <Button className='mt-4' onClick={submitStep}>Join</Button>
+    <Button className='mt-4' onClick={submitStep}>Pay to Join Game</Button>
   )
 };
 
@@ -56,7 +55,7 @@ const WaitStep: StepComponent = ({submitStep}) => {
 
 const SubmitStep: StepComponent = ({submitStep}) => {
   return (
-    <Button className='mt-4' onClick={submitStep}>Submit proof</Button>
+    <Button className='mt-4' onClick={submitStep}>Ape in</Button>
   )
 };
 
@@ -68,7 +67,7 @@ const LoadingStep: StepComponent = ({submitStep}) => {
 
 const DistributeStep: StepComponent = ({submitStep}) => {
   return (
-    <Button className='mt-4' onClick={submitStep}>Distribute</Button>
+    <Button className='mt-4' onClick={submitStep}>Claim NFT</Button>
   )
 };
 
@@ -114,6 +113,8 @@ export default function Page() {
     enabled: (!!name && !!groupExists && groupData?.numberMembers > 0)
   });
 
+  console.log({memberInfo, groupData});
+
   const { data: allProofs }: {data?: string[], isLoading: boolean, isError: boolean} = useContractRead({
     address: SMART_CONTRACT_ADDRESS,
     abi: GoalsABI.abi,
@@ -144,7 +145,11 @@ export default function Page() {
           }
         }
       } else {
-        setStep("submit")
+        if (memberInfo && address && memberInfo.includes(address)) {
+          setStep("submit")
+        } else {
+          setStep("join")
+        }
       }
     }
   }, [groupData, memberInfo]);
@@ -225,18 +230,12 @@ export default function Page() {
     hash: startTxData?.hash,
   });
 
-  useEffect(() => {
-    if (startStatus == "success") {
-      setStep("submit")
-    }
-  }, [startStatus])
-
   // component state
   const [step, setStep] = useState<Step>("wait");
   const [approvalStates, setApprovalStates] = useState({first: true, second: true, third: true})
 
   useEffect(() => {
-    if (groupData.numberMembers == groupData.numberVotes) {
+    if (groupData.numberMembers > 2 && (groupData.numberMembers == groupData.numberVotes)) {
       setStep("distribute")
       return;
     }
@@ -267,12 +266,67 @@ export default function Page() {
     else return "Group";
   }
 
+  const {
+    data: joinGroupTXData,
+    writeAsync: joinGroupWriteTX,
+    isLoading: isLoadingJoinGroup,
+  } = useContractWrite({
+    address: SMART_CONTRACT_ADDRESS,
+    abi: GoalsABI.abi,
+    functionName: "joinGroup",
+    onSuccess: () => {
+      toast("Transaction submitted!");
+    },
+    onError: (err: any) => {
+      if (err?.shortMessage !== "User rejected the request.") {
+        toast.error("There was an error processing your transaction.");
+      }
+    },
+  });
+
+  const { status: joinStatus } = useWaitForTransaction({
+    hash: joinGroupTXData?.hash,
+  });
+
+  useEffect(() => {
+    if(joinStatus && joinStatus == "success") {
+      setStep("submit")
+    }
+  });
+
+  const {
+    data: approveTXData,
+    writeAsync: approveTX,
+    isLoading: isApproving
+  } = useContractWrite({
+    address: ERC20_TOKEN_ADDRESS,
+    abi: erc20ABI,
+    functionName: "approve",
+    onSuccess: () => {
+      toast("Transaction submitted!");
+    },
+    onError: (err: any) => {
+      if (err?.shortMessage !== "User rejected the request.") {
+        toast.error("There was an error processing your transaction.");
+      }
+    },
+  });
+
+  const { status: approvalStatus } = useWaitForTransaction({
+    hash: approveTXData?.hash,
+  });
+
+  const joinApe = async () => {
+    await approveTX({args: [SMART_CONTRACT_ADDRESS, parseEther("1000")]});
+    await joinGroupWriteTX({args: [name, "APE IN", "LET'S APE FRENS"]});
+  };
+
   const renderActionButton = () => {
     switch(step) {
       case "wait":
         return <WaitStep submitStep={() => null}/>
       case "join":
-        return <JoinStep submitStep={() => router.push(`/group/${name}/join`)}/>
+        return <JoinStep submitStep={() => joinApe()} isLoading={isLoadingJoinGroup || isApproving}/>
       case "submit":
         return <SubmitStep submitStep={() => router.push(`/group/${name}/submit`)}/>
       case "vote":
@@ -291,13 +345,14 @@ export default function Page() {
   const groupContent = () => {
     return (
       <MainContent>
-        <Typography asProp='h1' weight='bold' className='mb-4'>{name}</Typography>
-        <Typography asProp='p' fontVariant='body'>This group is for the true Apes, the holders of Ape Coin to hit their goals</Typography>
+        <Typography asProp='h1' weight='bold' className='mb-4'>Turkish Dilemma 🇹🇷</Typography>
+        <Typography asProp='p' fontVariant='body'> In "Turkish Dilemma," each friend stakes an equal amount of ApeCoin. The winner is the player who presses the “Ape In” button at the median turn order. The suspense builds over 7 days, culminating in a surprise reveal of the winner.</Typography>
         <TagRow>
           {/* @ts-ignore */ }
-          {!!groupData.baseAmount && <Tag colorStyle='bluePrimary'>{formatEther(groupData.baseAmount)} ETH Buy in</Tag>}
-          {(!!groupData.durationDays && !groupData.endTime) && <Tag colorStyle='blueSecondary'>{Number(groupData.durationDays)} days</Tag>}
-          {(!!groupData.durationDays && !!groupData.endTime) && <Tag colorStyle='blueSecondary'>{groupData.durationDays} days left</Tag>}
+          {!!groupData.baseAmount && <Tag colorStyle='bluePrimary'>{formatEther(groupData.baseAmount)} $APE</Tag>}
+          {(!!groupData.durationDays && !groupData.endTime) && <Tag colorStyle='blueSecondary'>{6} days</Tag>}
+          {(!!groupData.durationDays && !!groupData.endTime && step != "distribute") && <Tag colorStyle='blueSecondary'>{2} days left</Tag>}
+          {(step == "distribute" || step == "done") && <Tag colorStyle='purplePrimary'>Game Over</Tag>}
         </TagRow>
         <CreatorRow>
           <div style={{ minWidth: '50px' }}>
@@ -319,7 +374,7 @@ export default function Page() {
             setApprovalState={(state) => setApprovalStates({...approvalStates, first: state})}
             allProofs={allProofs}
           /> :
-          <Typography className="mt-2">Be the first to join the group!</Typography>}
+          <Typography className="mt-2">Be the first to join the game!</Typography>}
         {groupData.numberMembers > 1 &&
           <OnchainUserItem
             key={`${name}-${1}`}
@@ -340,7 +395,7 @@ export default function Page() {
             numberOfMembers={groupData.numberMembers}
             step={step}
             groupExists={!!groupExists}
-            index={1}
+            index={2}
             address={memberInfo?.[2] || "0x0"}
             approvalState={approvalStates.third}
             setApprovalState={(state) => setApprovalStates({...approvalStates, third: state})}
