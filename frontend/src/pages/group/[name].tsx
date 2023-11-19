@@ -25,7 +25,7 @@ import { formatEther } from 'viem'
 import { OnchainUserItem } from '@/components/OnchainUserItem'
 import { shortAddress } from '@/lib/utils';
 
-const DEFAULT_IMAGE = "https://ipfs.io/ipfs/bafybeigauplro2r3fyn5443z55dp2ze5mc5twl5jqeiurulyrnociqynkq/male-2-8-15-10-8-2-11-9.png";
+const DEFAULT_IMAGE = "https://i1.rgstatic.net/ii/profile.image/1115161528147968-1642886635007_Q512/Amina-Ahmed-12.jpg";
 
 type Step = "join" | "wait" | "submit" | "start" | "distribute" | "vote" | "done" | "";
 type StepComponent = (props: { submitStep: () => void, isLoading?: boolean }) => JSX.Element;
@@ -144,7 +144,11 @@ export default function Page() {
           }
         }
       } else {
-        setStep("submit")
+        if (memberInfo && address && memberInfo.includes(address)) {
+          setStep("submit")
+        } else {
+          setStep("join")
+        }
       }
     }
   }, [groupData, memberInfo]);
@@ -236,15 +240,15 @@ export default function Page() {
   const [approvalStates, setApprovalStates] = useState({first: true, second: true, third: true})
 
   useEffect(() => {
-    if (groupData.numberMembers == groupData.numberVotes) {
-      setStep("distribute")
+    if (groupData.numberMembers == 3 && groupData.numberMembers == groupData.numberVotes) {
+      setStep("vote")
       return;
     }
     if(allProofs && allProofs?.includes(address || "0x0")) {
       setStep("vote")
     }
     //@ts-ignore
-  }, [allProofs, groupInformation.numberMembers, groupInformation.numberVotes]);
+  }, [allProofs, groupInformation?.numberMembers, groupInformation?.numberVotes]);
 
   const start = async () => {
     await startWrite({args: [name]})
@@ -292,10 +296,10 @@ export default function Page() {
     return (
       <MainContent>
         <Typography asProp='h1' weight='bold' className='mb-4'>{name}</Typography>
-        <Typography asProp='p' fontVariant='body'>This group is for the true Apes, the holders of Ape Coin to hit their goals</Typography>
+        <Typography asProp='p' fontVariant='body'>It's time we tackle our finances head-on. What's your money challenge? Let's each set a goal that pushes us towards financial stability in a region prone to economic fluctuations and occasional natural disasters.</Typography>
         <TagRow>
           {/* @ts-ignore */ }
-          {!!groupData.baseAmount && <Tag colorStyle='bluePrimary'>{formatEther(groupData.baseAmount)} ETH Buy in</Tag>}
+          {!!groupData.baseAmount && <Tag colorStyle='bluePrimary'>{formatEther(groupData.baseAmount)} cUSD Buy in</Tag>}
           {(!!groupData.durationDays && !groupData.endTime) && <Tag colorStyle='blueSecondary'>{Number(groupData.durationDays)} days</Tag>}
           {(!!groupData.durationDays && !!groupData.endTime) && <Tag colorStyle='blueSecondary'>{groupData.durationDays} days left</Tag>}
         </TagRow>
@@ -340,7 +344,7 @@ export default function Page() {
             numberOfMembers={groupData.numberMembers}
             step={step}
             groupExists={!!groupExists}
-            index={1}
+            index={2}
             address={memberInfo?.[2] || "0x0"}
             approvalState={approvalStates.third}
             setApprovalState={(state) => setApprovalStates({...approvalStates, third: state})}

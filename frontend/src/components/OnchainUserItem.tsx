@@ -32,6 +32,11 @@ type Props = {
 
 const DEFAULT_IMAGE = "https://ipfs.io/ipfs/bafybeigauplro2r3fyn5443z55dp2ze5mc5twl5jqeiurulyrnociqynkq/male-2-8-15-10-8-2-11-9.png";
 
+const DEFAULT_IMAGES = [
+  'https://i1.rgstatic.net/ii/profile.image/1115161528147968-1642886635007_Q512/Amina-Ahmed-12.jpg',
+  'https://media.licdn.com/dms/image/C4D03AQGYN04skdzx4g/profile-displayphoto-shrink_800_800/0/1624992730002?e=2147483647&v=beta&t=Y9qwSHMI3_cA0hgwwCTnn8GNrP_whX02Aho2z2w5wZc',
+  'https://media.licdn.com/dms/image/C4D03AQFIwmPIAM2SpQ/profile-displayphoto-shrink_800_800/0/1564749179573?e=2147483647&v=beta&t=GnG1vSt7JEK5pxcUA5VfB8-0bjpiB5LVR0a8b0f1rqE'
+]
 type MemberInfo = {
   goalDescription: string,
   goalTitle: string,
@@ -106,7 +111,9 @@ export function OnchainUserItem({name, groupExists, numberOfMembers, step, index
             </>
           )
         } else {
-          return <Tag className="ml-auto" colorStyle="blueSecondary">Waiting for proof</Tag>
+          return <Button colorStyle='transparent' shape="square" className='ml-auto' onClick={() => viewProof()}>
+          <MagnifyingGlassSVG />
+        </Button>
         }
       case "distribute":
         return <>
@@ -122,7 +129,7 @@ export function OnchainUserItem({name, groupExists, numberOfMembers, step, index
   return (
     <MemberRow>
       <div style={{ minWidth: '50px' }}>
-        <Avatar label='profile_picture' src={DEFAULT_IMAGE}/>
+        <Avatar label='profile_picture' src={DEFAULT_IMAGES[index]}/>
       </div>
       <MemberDescription>
         <Typography asProp='p' fontVariant='body'>{shortAddress(memberInfo?.source || "")}</Typography>

@@ -68,7 +68,7 @@ export default function CreateGroup() {
           <div className="mb-4">
             <Input
               label="Group Name"
-              placeholder="Apes Together Strong"
+              placeholder="Name"
               inputMode="text"
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
